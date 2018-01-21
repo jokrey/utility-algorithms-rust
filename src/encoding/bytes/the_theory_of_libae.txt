@@ -1,0 +1,85 @@
+LIbae <=> Length-Indicator based byte array encoding
+Simple, low-level byte encoder.
+
+Encodes variable number of byte chunks into a single one.
+
+This is done by using a single byte to indicate how many bytes are required store the chunk length  (using 64 bit integer, due to Java's long primitive)
+   (at most 8, because that a lot of Terrabyte and long isn't longer)
+   Then it writes how many bytes are required to store the chunk (big endian)
+   Then comes the chunk itself.
+
+At decoding time this way every byte chunk can be read in sequence from the underlying storage system.
+    If a chunk is read with li_decode_single, the read pointer is increased so that when calling the method again the next chunk is read.
+
+A LIbae implementation has to have the following methods:
+	set_storage_system(LIbaeStorageSystem) - libae has to support multiple storage systems. The minimum required functionality can be seen below
+		should be called from a constructor. There is need to actually have a publicly available method with this name.
+	set_content(byte[])
+		only wraps storage_system.set_content
+	get_content() byte[]
+		only wraps storage_system.get_content
+
+	li_encode_single(byte[])
+		encodes and appends bytes to storage
+	li_encode_single(stream, stream_length)
+		encodes and appends stream of length stream_length to storage
+
+
+	reset_read_pointer()
+		resets the read pointer to 0. I.e. the start of the file
+
+	byte[] li_decode_single()
+		decodes and returns the next li_chunk at current read_pointer position. If no more chunks are available this has to be indicated somehow(heavily dependend on language)
+	stream li_decode_single()
+		like the on above, but returns a stream to the next decoded li_chunk. Useful for very, very large chunks.
+	                            The stream has to NOT guarantee to be readable if not used immediatly.
+	byte[] li_delete_single()
+		same as bytes li_decode_single(), but deletes the read chunk of data.
+	integer li_skip_single()
+		jumps over the next li_chunk and sets the read_pointer to the chunk after. Returns size of li_chunk skipped(chunk size, NOT bytes skipped)
+
+	Optional:
+		obviously every "single" method can also be applied multiple times(making it a "multiple" method), but those are simple convenience wrapper and not part of the core API
+
+
+Notes:		
+Actual method names can vary. Rust for example doesn't allow methods with the same name in a single Trait.
+Error handling is dependent on language, but should obviously exist where needed.
+    However, this can be said:
+		The Storage System should throw or relay any internal errors to the caller.
+		If libae cannot find another element(because the end was reached) it should return null(or None or whatever, but generally not throw an exception(if that exists in the language))
+
+
+LIbaeStorageSystem - required functionality(in java code):
+    void setContent(byte[] content);
+		Sets the entire content.
+
+    byte[] getContent();
+		Returns the content as a byte array. 
+		For some implementations this may not be possible, because RAM. Then it can fail.
+
+    LIbaeContentBuilder delete(long start(inclusive), long end(exclusive)); 
+		deletes the bytes between the specified indices
+		if start >= end throw an exception
+
+    LIbaeContentBuilder append(byte[] bytes); 
+		Appends the bytes to the end of the content
+
+    LIbaeContentBuilder append(InputStream content, long content_length);
+		Will read bytes from stream until content_length is reached.
+			If the stream ends before that many bytes were read any number of exceptions will be thrown.
+			However to not make the entire libae content invalid, the remaining bytes will be padded with random(kind of) data
+		The stream will BE CLOSED after everything of value(and content_length) has been read.
+
+    byte[] subarray(long start, long end);
+		returns the bytes between the specified indices
+		if the end index is out of boundaries, then return subarray(start, contentSize())
+		if start > end throw an exception
+
+    InputStream substream(long start, long end);
+		Returns an input stream that will read the bytes between start and end.
+      If anything else from this object is called before the stream is read until the end results may be wrong.
+      if start == end, then a stream will be returned.
+
+    long contentSize();
+		 Returns the size of the content.

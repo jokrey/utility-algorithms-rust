@@ -1,0 +1,81 @@
+Abae <=> Advanced Byte Array Encoder
+
+
+Abae is a binary encoder or file type that minimally encodes multiple byte chunks into one and gives each one a tag them.
+This way they become searchable and accessible without having to worry about their internal order.
+
+Internally the libae storage system is used. Entries are added in pairs(first the tag, then the actual byte content).
+   As with LIbae the internal byte storage can be in RAM or on file or even remote(but you'd have to implement that yourself).
+
+In the system each tag is only allowed to exist once.
+
+The system works by iterating over libae content in jumps of two.
+  It decodes one, checks if it is the requested tag and then does the operation.
+    If it is not the requested tag the content is simply skipped.
+
+WHY?
+  The system is particularly useful for one thing:
+  To create a custom, storage effizient, but comfortable own file type.
+    When creating a protocol for a file type it often happens that you'd want to store data.
+    The more complex those structures get, the more complex the code becomes.
+    Often it has to include some sort of parser, the actual data storage becomes secondary.
+    With this system that whole process becomes simple and declarative.
+    And it being language independent it is that easy in a number of languages.
+
+	
+
+An implementation of Abae has to have the following methods:
+	set_storage_system(LIbaeStorageSystem)
+		libae has to support multiple storage systems. The minimum required functionality can be seen below
+		should be called from a constructor. There is need to actually have a publicly available method with this name.
+	set_content(byte[])
+		only wraps libae.set_content
+	get_content() byte[]
+		only wraps libae.get_content
+        get_tags() String[]
+		Returns all tags stored within the system.
+
+	tag_exists(string tag) boolean
+		jumps through the tags until it finds the one. then it returns true otherwise false
+	tag_length(string tag) i64
+		jumps through the tags until it finds the one. then it returns the length of that tag(possibly with a skip).
+		If the tag does not exist, then return -1.
+	get_entry(string tag) byte[]
+		jumps through the tags until it finds the one. then it returns the entry at that tag as a copied byte[].
+		If the tag does not exist, then return null(or None or whatever)
+	delete_entry(string tag) byte[]
+		jumps through the tags until it finds the one. then it returns the entry at that tag as a copied byte[].
+		If the tag does not exist, then return null(or None or whatever)
+		  null should also be an indicator that nothing was deleted
+	delete_entry_noreturn(tag)
+		exactly as delete_entry(string tag) byte[], BUT does not return a byte[] and does not copy it from buffer
+	get_entry_as_stream(string tag) stream(read)
+		returns a reading stream(of sorts) to the content of the tag.
+		Unlike get_entry and delete_entry it is not guaruanteed to point to a copy of the contents.
+			Because this method is particularly interesting when reading from a 
+
+	add_entry(string tag, byte[] cont)
+	    first calls delete_entry_noreturn(tag), to make sure the tag does not exist within the system anymore
+		appends tag as utf8 byte array and cont directly to the underlying libae system.
+			using li_encode_single
+	add_entry_from_stream(string tag, stream, stream_length)
+		appends tag as utf8 byte array and stream with stream length to underlying libae.
+		using li_encode_single_stream
+	add_entry_nocheck(string tag, byte[] cont)
+		exactly as add_entry(string tag, byte[] cont), but does no call delete_entry_noreturn(tag)
+			this makes it possibly much faster.
+			Because an entire search is spared. A search in worst case O(n).
+		So the caller has to be sure the tag does not exist within the system..
+    add_entry_from_stream_nocheck(string tag, stream, stream_length)
+                Self explanatory.
+		
+Optionals:
+	Not strictly required, but highly encouraged are implementations of helper methods for a variety of types.
+	strings here should use utf8 encoding, int types big-endian and arrays just add each index to the tag.
+
+Notes:		
+Actual method names can vary. Rust for example doesn't allow methods with the same name in a single Trait.
+Error handling is dependent on language, but should obviously exist where needed.
+    However, this can be said:
+		The Storage System should throw or relay any internal errors to the caller.
+		If abae cannot find another element it should return null(or None or whatever, but generally not throw an exception(if that exists in the language))
