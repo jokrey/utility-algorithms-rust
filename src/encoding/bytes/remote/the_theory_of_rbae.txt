@@ -1,0 +1,42 @@
+Rbae <=> Remote Byte Array Encdoder
+
+
+Rbae is the remote variant of Ubae.
+
+From a client's view it should look and feel exactly like a local ubae system.
+  (this entails that every single ubae method has to work, exist and behave as expected)
+
+Additionally the system now has to be thread safe. (By locking)
+
+The server on the other hand should ALSO feel exactly like a local ubae.
+  (this entails that every single ubae method has to work, exist and behave as expected)
+  The server actually just is an ubae that additionally stores requests from the client in it's own underlying storage system.
+
+So the whole system can feel like bidirectional, stored communication or/and like a simple database.
+
+
+Implementation:
+Any valid, cross language usable implementation should use MCNP as the underlying communication system.
+As that the Client just connects like any normal mcnp client.
+The server can just use the mcnp-server implementation to wait for the "new connection"-callback.
+Each new connection gets a new thread and wait's in an endless loop for new connection causes from the connection.
+If a cause comes in then the server ubae is locked and the request is handled.
+
+Each method defined as mandatory in ubae requires direct implementation in ubae.
+  Their mcnp-cause id's are for example defined in RemoteEncoderMCNPCauses.java.
+The client sends the correct cause to the server.
+And the server handles it according to a specific protocol for each request.
+    (how exactly they work would take this too far, check any of the already valid implementations)
+
+Thread safety:
+Obviously the server requires threading functionality...
+But what if multiple clients attempt to connect at the same time?
+It could happen that while one client updates an entry(first deleting it, then updating it's contents), another one add's it.
+    Leading to inconsistencies in the file, making it invalid
+    And that is not to speak of actually two thread trying to write to the same file at the same time.
+So a locking mechanism must be employed. Whenever one thread is using the underlying(NOT THREAD SAFE) ubae system, nobody else should be able to.
+However locking should be as fine grained as possible.
+    Besides obvious performance advantages, there also is a security issue:
+       If ubae was ever locked while reading from the client, then the client could simply refuse to send any data letting the server wait forever.
+       And the issue is not just an idle thread, which is bad enough... No: Without fine grained locking the entire server would be blocked.
+       So keep that in mind.
