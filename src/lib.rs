@@ -1,7 +1,10 @@
 extern crate core;
+extern crate ring;
+extern crate untrusted;
+extern crate crypto;
+
+///:author jokrey
 
 pub mod encoding;
 pub mod time_keeper;
-
-#[cfg(test)]
-mod tests;
+pub mod network;
