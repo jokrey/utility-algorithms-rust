@@ -1,0 +1,71 @@
+Author: jokrey
+
+Simple, High-Level wrapper, that adds some functionality to the most basic byte stream.
+
+Useful for simple, standardized inter programming language communication. Where build in high level constructs are not available.
+Inter-programming Language entails that both sides will only be able to use the most basic, low level byte-"streams" (or whatever expression of that is available).
+Writing a number bytes is easy here. However it gets tricky when the receiver doesn't know how many bytes to expect.
+      For example when transmitting a file or a complex data structur such as a string.
+Sends and reads multiple byte arrays(chunks) of completly variable length over a single established connection.
+      Apart from that some very basic(and common) data types of fixed length are also supported by the protocol.
+      (byte, byte arrays of fixed length, int16(twos_compl), int32(twos_compl), int64(twos_compl), float32(IEEE-754), float64(IEEE-754))
+           NOTE: Booleans are not supported since their implementation greatly differs between common languages.
+
+The idea is that after establishing a connection the client sends a "cause" byte, indicating what kind of complex "conversation" it would like to have.
+After that both sides have to each know exactly what kind of data the other one wants.
+
+   An Example of a typical "conversation" (usefulness of the example data in the braces is debatable ;) ):
+|           Client            |            Server            |
+|                             |    waitForNewConnection      |
+|     establishConnection     |  handleConnection(newThread) |
+|                             |         waitForCause         |
+|         sendCause           |         receiveCause         |
+|                             |          waitForInt          |
+|         sendInt x           |          receiveInt          |
+|         waitForInt          |      doOperationOnX (x*x)    |
+|         receiveInt          |         sendInt (x*x)        |
+|                             | waitForChunkOfVariableLength |
+|      closeConnection        | closeConnection(finishThread)|
+
+More complex, simultaneous, two way communication (for a example a game server may need), can also be achieved using this protocol.
+   Then both sides would have 2 simultaneous, one sided(likely too slow otherwise), conversations.
+   However that may not be fast enough. Then fixed package size, with a fixed cause at byte position 0, and fixed data sizes being send in the same chunk would be preferable.
+   This protocol may then be overkill.
+
+
+MCNP <=> Multi Chunk Network Protocol
+
+An mcnp api has to have/support:
+  RAW:
+    The following "raw" data types:
+      uint8, int16, int32, int64, float32, float64, uint8array
+            (if all of them are required <any_data_type> will be noted)
+
+  Fixed Chunk transfer functionality (7x for all data types):
+    - send_fixed_chunk_<any_data_type>(<any_data_type>)
+    - read_fixed_chunk_<any_data_type>() <any_data_type>
+
+  
+
+
+  SEMANTIC WRAPPERS:
+    Cause functionality:
+      - send_cause(int32)
+         send_fixed_chunk_int32
+      - read_cause() int32
+    Variable Chunk functionality:
+        - start_variable_chunk(int64(chunk_length))
+           send_fixed_chunk_int64
+        - send_variable_chunk_part(uint8array)
+           send_fixed_chunk_uint8array
+        - read_variable_chunk() uint8array
+           more complex
+
+    OPTIONALS and comfort functionality:
+      - send_variable_array(uint8array)
+         start_chunk & send_fixed_chunk_uint8array
+      - read_variable_array() uint8array
+         read_chunk_length
+      - send_variable_utf8(utf8)
+         convert_utf8 & start_chunk & send_fixed_chunk_uint8array
+      - read_variable_utf8() utf8
