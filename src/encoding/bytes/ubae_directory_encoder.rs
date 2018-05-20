@@ -1,8 +1,8 @@
 extern crate core;
 
-use encoding::bytes::abae::Abae;
+use encoding::bytes::ubae::Ubae;
 use encoding::bytes::file_storage_system::FileStorageSystem;
-use encoding::bytes::abae::AbaeTraits;
+use encoding::bytes::ubae::UbaeTraits;
 use std::path::PathBuf;
 use std::fs;
 use std::fs::File;
@@ -33,17 +33,17 @@ pub fn encode(source_directory_path:&str, target_file_path:&str) -> u64 {
     }
 
     let storage = FileStorageSystem::create_leave_source_intact_with_custom_buf_size(target_file_path, 16384);
-    let mut abae = Abae::new(storage);
-    abae.set_content(&vec![0u8;0][..]);
+    let mut ubae = Ubae::new(storage);
+    ubae.set_content(&vec![0u8;0][..]).expect("setting content failed");
 
-    let errors = add_directory_to_system(&mut abae, source_directory_path,
+    let errors = add_directory_to_system(&mut ubae, source_directory_path,
                                          source_directory.to_owned());
 
     return errors;
 }
 
 //allowing up to u64 errors is not necessary, but funny.
-fn add_directory_to_system<T:StorageSystem> (abae: &mut Abae<T>, original_directory_path:&str, directory:PathBuf) -> u64 {
+fn add_directory_to_system<T:StorageSystem> (ubae: &mut Ubae<T>, original_directory_path:&str, directory:PathBuf) -> u64 {
     if !directory.exists() || !directory.is_dir() {
         panic!("invalid directory supplied");
     }
@@ -54,14 +54,15 @@ fn add_directory_to_system<T:StorageSystem> (abae: &mut Abae<T>, original_direct
             if let Ok(subfilepath) = path {
                 let f = subfilepath.path();
                 if f.is_dir() {
-                    errors+=add_directory_to_system(abae, original_directory_path, f);
+                    errors+=add_directory_to_system(ubae, original_directory_path, f);
                 } else {
                     if let Ok(mut file) = File::open(&f) {
                         if let Ok(metadata) = fs::metadata(&f) {
                             let internal_path_opt = get_inner_path(original_directory_path, &f.to_str().expect("what?? how was this not valid unicode?"));
                             if let Some(internal_path) = internal_path_opt {
-                                abae.add_entry_from_stream_nocheck(&internal_path, &mut file, metadata.len() as i64);
-                                continue
+                                if let Ok(()) = ubae.add_entry_from_stream_nocheck(&internal_path, &mut file, metadata.len() as i64) {//added untested, should definitly work though
+                                    continue
+                                }
                             }
                         }
                     }
@@ -104,14 +105,14 @@ pub fn decode(source_file_path:&str, target_directory_path:&str) -> u64 {
     }
 
     let storage = FileStorageSystem::create_leave_source_intact_with_custom_buf_size(source_file_path, 16384);
-    let abae_iter = Abae::new_tag_stream_iterator(storage);
+    let ubae_iter = Ubae::new_tag_stream_iterator(storage);
 
     let mut errors = 0u64;//yes we do need a u64 for this. (honestly we do not actually, but I think it's funny)
-    for (tag, mut stream) in abae_iter {
+    for (tag, mut stream) in ubae_iter {
         let target_file = target_directory.join(Path::new(&tag));
         fs::create_dir_all(target_file.parent().expect("parent file could not be found or something like that i don't even anymore.")).expect("create parent dir failed");
         if let Ok(mut target_stream) = File::create(target_file) {
-            io::copy(&mut stream,&mut target_stream).expect("copy failed");
+            io::copy(&mut stream.0, &mut target_stream).expect("copy failed");
         } else {
             println!("{} failed to be restored", tag);
             errors+=1;

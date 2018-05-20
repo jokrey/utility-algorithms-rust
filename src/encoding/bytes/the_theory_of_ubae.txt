@@ -1,7 +1,9 @@
-Abae <=> Advanced Byte Array Encoder
+Author: jokrey
+
+Ubae <=> Universal Byte Array Encdoder
 
 
-Abae is a binary encoder or file type that minimally encodes multiple byte chunks into one and gives each one a tag them.
+Ubae is a binary encoder or file type that minimally encodes multiple byte chunks into one and gives each one a tag.
 This way they become searchable and accessible without having to worry about their internal order.
 
 Internally the libae storage system is used. Entries are added in pairs(first the tag, then the actual byte content).
@@ -15,7 +17,7 @@ The system works by iterating over libae content in jumps of two.
 
 WHY?
   The system is particularly useful for one thing:
-  To create a custom, storage effizient, but comfortable own file type.
+  To create a custom, storage efficient, but comfortable own file type.
     When creating a protocol for a file type it often happens that you'd want to store data.
     The more complex those structures get, the more complex the code becomes.
     Often it has to include some sort of parser, the actual data storage becomes secondary.
@@ -24,7 +26,7 @@ WHY?
 
 	
 
-An implementation of Abae has to have the following methods:
+An implementation of Ubae has to have the following methods:
 	set_storage_system(LIbaeStorageSystem)
 		libae has to support multiple storage systems. The minimum required functionality can be seen below
 		should be called from a constructor. There is need to actually have a publicly available method with this name.
@@ -66,16 +68,16 @@ An implementation of Abae has to have the following methods:
 			this makes it possibly much faster.
 			Because an entire search is spared. A search in worst case O(n).
 		So the caller has to be sure the tag does not exist within the system..
-    add_entry_from_stream_nocheck(string tag, stream, stream_length)
+        add_entry_from_stream_nocheck(string tag, stream, stream_length)
                 Self explanatory.
 		
 Optionals:
 	Not strictly required, but highly encouraged are implementations of helper methods for a variety of types.
-	strings here should use utf8 encoding, int types big-endian and arrays just add each index to the tag.
+	strings here should use utf8 encoding, int types big-endian and arrays an internal libae.
 
 Notes:		
 Actual method names can vary. Rust for example doesn't allow methods with the same name in a single Trait.
-Error handling is dependent on language, but should obviously exist where needed.
+Error handeling is dependent on language, but should obviously exist where needed.
     However, this can be said:
 		The Storage System should throw or relay any internal errors to the caller.
-		If abae cannot find another element it should return null(or None or whatever, but generally not throw an exception(if that exists in the language))
+		If ubae cannot find another element it should return null(or None or whatever, but generally not throw an exception(if that exists in the language))
