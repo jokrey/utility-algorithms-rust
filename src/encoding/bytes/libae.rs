@@ -4,24 +4,26 @@ use std::io::Read;
 use std::cmp;
 use std::io::Cursor;
 use self::byteorder::{BigEndian, ReadBytesExt};
-use super::libae_storage_system::StorageSystem;
+use super::libae_storage_system::{StorageSystem, StorageSystemError};
 use super::Substream;
 use std::fs::File;
 
 pub trait LIbaeTraits {
-    fn set_content(&mut self, bytes : &[u8]);
-    fn get_content(&self) -> &[u8];
+    fn set_content(&mut self, bytes : &[u8]) -> Result<(), StorageSystemError>;
+    fn get_content(&mut self) -> Result<Vec<u8>, StorageSystemError>;
 
-    fn li_encode_single(&mut self, bytes : &[u8]);
-    fn li_encode_single_stream(&mut self, stream : &mut Read, stream_length:i64);
+    fn li_encode_single(&mut self, bytes : &[u8]) -> Result<(), StorageSystemError>;
+    fn li_encode_single_stream(&mut self, stream : &mut Read, stream_length:i64) -> Result<(), StorageSystemError>;
 
     fn reset_read_pointer(&mut self);
 
     fn li_decode_single(&mut self) -> Option<Vec<u8>>;
-    fn li_decode_single_stream(&mut self) -> Option<Substream<File>>;
+    fn li_decode_single_stream(&mut self) -> Option<(Substream<File>, i64)>;
 
     fn li_delete_single(&mut self) -> Option<Vec<u8>>;
     fn li_skip_single(&mut self) -> i64;
+
+    fn li_decode_all(&mut self) -> Vec<Vec<u8>>;
 }
 
 
@@ -45,21 +47,27 @@ impl<T:StorageSystem> LIbae<T> {
 }
 
 impl<T:StorageSystem> LIbaeTraits for LIbae<T> {
-    fn set_content(&mut self, bytes: &[u8]) {
-        self.storage_system.set_content(bytes);
+    fn set_content(&mut self, bytes: &[u8]) -> Result<(), StorageSystemError> {
+        return self.storage_system.set_content(bytes)
     }
-    fn get_content(&self) -> &[u8] {
+    fn get_content(&mut self) -> Result<Vec<u8>, StorageSystemError> {
         self.storage_system.get_content()
     }
 
-    fn li_encode_single(&mut self, bytes: &[u8]) {
-        self.storage_system.append(&get_length_indicator_for(bytes.len() as i64)[..]);
-        self.storage_system.append(bytes);
+    fn li_encode_single(&mut self, bytes: &[u8]) -> Result<(), StorageSystemError> {
+        match self.storage_system.append(&get_length_indicator_for(bytes.len() as i64)[..]) {
+            Err(e) => {return Err(e)},
+            Ok(_) => {
+                return self.storage_system.append(bytes)
+            },
+        }
     }
 
-    fn li_encode_single_stream(&mut self, stream: &mut Read, stream_length: i64) {
-        self.storage_system.append(&get_length_indicator_for(stream_length as i64)[..]);
-        self.storage_system.append_stream(stream, stream_length);
+    fn li_encode_single_stream(&mut self, stream: &mut Read, stream_length: i64) -> Result<(), StorageSystemError> {
+        println!("li_encode_single_stream");
+        self.storage_system.append(&get_length_indicator_for(stream_length)[..])?;
+        println!("aft append li");
+        self.storage_system.append_stream(stream, stream_length)
     }
 
     fn reset_read_pointer(&mut self) {
@@ -71,8 +79,8 @@ impl<T:StorageSystem> LIbaeTraits for LIbae<T> {
             None => return None,
             Some(start_end) => {
                 match self.storage_system.subarray(start_end.0, start_end.1) {
-                    None => return None,
-                    Some(decoded) => {
+                    Err(_) => return None,
+                    Ok(decoded) => {
                         self.read_pointer = start_end.1;
                         return Some(decoded)
                     }
@@ -81,15 +89,16 @@ impl<T:StorageSystem> LIbaeTraits for LIbae<T> {
         }
     }
 
-    fn li_decode_single_stream(&mut self) -> Option<Substream<File>> {
+    fn li_decode_single_stream(&mut self) -> Option<(Substream<File>, i64)> {
         match get_start_and_end_index_of_next_li_chunk(self.read_pointer, &mut self.storage_system) {
             None => return None,
             Some(start_end) => {
                 match self.storage_system.substream(start_end.0, start_end.1) {
-                    None => return None,
-                    Some(stream) => {
+                    Err(_) => return None,
+                    Ok(stream) => {
                         self.read_pointer = start_end.1;
-                        return Some(stream);
+                        let stream_length = start_end.1 - start_end.0;
+                        return Some((stream, stream_length));
                     }
                 }
             }
@@ -100,9 +109,12 @@ impl<T:StorageSystem> LIbaeTraits for LIbae<T> {
         match get_start_and_end_index_of_next_li_chunk(self.read_pointer, &mut self.storage_system) {
             None => None,
             Some(start_end) => {
-                let decoded = self.storage_system.subarray(start_end.0, start_end.1).unwrap();
-                self.storage_system.delete(self.read_pointer, start_end.1);
-                return Some(decoded);
+                if let Ok(decoded) = self.storage_system.subarray(start_end.0, start_end.1) {
+                    if let Ok(_) = self.storage_system.delete(self.read_pointer, start_end.1) {
+                        return Some(decoded);
+                    }
+                }
+                return None
             }
         }
     }
@@ -115,6 +127,16 @@ impl<T:StorageSystem> LIbaeTraits for LIbae<T> {
                 return start_end.1-start_end.0;
             }
         }
+    }
+
+    fn li_decode_all(&mut self) -> Vec<Vec<u8>> {
+        let mut all = Vec::new();
+
+        while let Some(single) = self.li_decode_single() {
+            all.push(single);
+        }
+
+        return all;
     }
 }
 
@@ -132,28 +154,30 @@ fn get_length_indicator_for(length:i64) -> Vec<u8> {
 }
 
 fn get_start_and_end_index_of_next_li_chunk(start_index:i64, storage_system:&mut StorageSystem) -> Option<(i64, i64)> {
-    let mut i=start_index;
-    if i+1>storage_system.content_size() {
-        return None;
-    }
-    let content_size = storage_system.content_size();
-    return match storage_system.subarray(i, i+9) { //cache maximum number of required bytes. (to minimize possibly slow subarray calls)
-        None => None,
-        Some(cache) => {
-            let leading_li = cache[0] as i64;
+    if let Ok(content_size) = storage_system.content_size() { //threating content_size error as "last element reached"
+        let mut i = start_index;
+        if i + 1 > content_size {
+            return None;
+        }
+        let content_size = content_size;
+        return match storage_system.subarray(i, i + 9) { //cache maximum number of required bytes. (to minimize possibly slow subarray calls)
+            Err(_) => None,
+            Ok(cache) => {
+                let leading_li = cache[0] as i64;
 
-            let length_indicator = &cache[1..(1 + leading_li) as usize];
-            let length_indicator_as_int = get_int(length_indicator);
-            if length_indicator_as_int == -1 || i + length_indicator_as_int > content_size {
-                return None;
+                let length_indicator = &cache[1..(1 + leading_li) as usize];
+                let length_indicator_as_int = get_int(length_indicator);
+                if length_indicator_as_int == -1 || i + length_indicator_as_int > content_size {
+                    return None;
+                }
+                i += leading_li + 1; //to skip all the li information.
+                return Some((i, i + length_indicator_as_int));
             }
-            i += leading_li + 1; //to skip all the li information.
-            return Some((i, i + length_indicator_as_int));
         }
     }
+    return None;
 }
 
-//todo use own code to convert.
 fn get_int(bytearr:&[u8]) -> i64 {// big-endian
     if bytearr.len() == 8 {
         let mut rdr = Cursor::new(bytearr);

@@ -1,6 +1,7 @@
 use std::io::Read;
 use std::cmp;
 use super::libae_storage_system::StorageSystem;
+use super::libae_storage_system::StorageSystemError;
 use std::fs::File;
 use super::Substream;
 use core::ptr;
@@ -26,16 +27,17 @@ impl VecStorageSystem {
         }
     }
 
-    fn set_content(&mut self, bytes: &[u8], new_cap: usize) {
+    fn set_content(&mut self, bytes: &[u8], new_cap: usize) -> Result<(), StorageSystemError> {
         self.data.clear();
         if bytes.len() > new_cap {
-            self.set_content(bytes, bytes.len());
+            self.set_content(bytes, bytes.len())
         } else {
             self.data.reserve_exact(new_cap);   //allocates the perfect amount, because self.data.len()==0
-            self.append(bytes);                           //fits because bytes.len() < new_cap
+            self.append(bytes)?;                           //fits because bytes.len() < new_cap
             if self.data.capacity() > new_cap {           //if capacity has been way larger before, then this might make sense.
                 self.data.shrink_to_fit();                //because self.data.clear() + self.data.reserve_exact() don't actually shrink internal capacity
             }
+            Ok(())
         }
     }
 }
@@ -45,7 +47,7 @@ impl StorageSystem for VecStorageSystem {
     //  (which is typically used at decoding time, but not when more content will be encoded)
     //   we also set the capacity according to the length. Meaning it is memory efficient, but adding more elements may be costly.
     //      to reset the capacity yourself(or not set it) use the method: set_content(&mut self, bytes: &[u8], new_cap: usize)
-    fn set_content(&mut self, bytes: &[u8]) {
+    fn set_content(&mut self, bytes: &[u8]) -> Result<(), StorageSystemError> {
         self.set_content(bytes, bytes.len())
     }
 
@@ -53,16 +55,16 @@ impl StorageSystem for VecStorageSystem {
     //   only actually useful if the content is then stored or send afterwards.
     //   though it can be kept for a long time if it is turned into a Vec using: Vec::from(get_content
     //     but that is slow, inefficient and not recommended.
-    fn get_content(&self) -> &[u8] {
-        &self.data[..]
+    fn get_content(&mut self) -> Result<Vec<u8>, StorageSystemError> {
+        Ok(self.data.to_owned())
     }
 
     // returns the content size as an i64. Which i realize is a bit dumb, but also you won't be storing 2^63-1 bytes, so it's fine.
-    fn content_size(&self) -> i64 {
-        self.data.len() as i64
+    fn content_size(&self) -> Result<i64, StorageSystemError> {
+        Ok(self.data.len() as i64)
     }
 
-    fn delete(&mut self, start: i64, end: i64) {
+    fn delete(&mut self, start: i64, end: i64) -> Result<(), StorageSystemError>  {
         if start < 0 {
             panic!("start smaller than 0");
         } else if end < start {
@@ -82,34 +84,39 @@ impl StorageSystem for VecStorageSystem {
             ptr::copy(src, dst, tail_len);
             self.data.set_len(start + tail_len);
         }
+        Ok(())
     }
 
-    fn append(&mut self, bytes: &[u8]) {
+    fn append(&mut self, bytes: &[u8]) -> Result<(), StorageSystemError>  {
         self.data.extend_from_slice(bytes);
+        Ok(())
     }
 
-    fn append_stream(&mut self, stream: &mut Read, stream_length: i64) {
+    fn append_stream(&mut self, stream: &mut Read, stream_length: i64) -> Result<(), StorageSystemError> {
         let mut buf = vec![0u8; stream_length as usize];
         match stream.read_exact(&mut buf) {
             _ => {} //if it goes right, cool. If it doesn't the rest of the buffer is filled with 0's which is also fine.
         }
 //        self.data.reserve_exact(stream_length); //done internally in append
         self.data.append(&mut buf);
+        Ok(())
     }
 
-    fn subarray(&mut self, start: i64, end: i64) ->  Option<Vec<u8>> {
+    fn subarray(&mut self, start: i64, end: i64) ->  Result<Vec<u8>, StorageSystemError> {
         if start > end {
-            None
+            Err(StorageSystemError::new("start index greater than end index. That doesn't make much sense to this code"))
         } else {
-            let start:usize = start as usize;
-            let end:usize = cmp::min(end, self.content_size()) as usize;
-            Some(Vec::from_iter(self.data[start..end].iter().cloned()))
+            let content_size = self.content_size()?;
+            let start: usize = start as usize;
+            let end: usize = cmp::min(end, content_size) as usize;
+            Ok(Vec::from_iter(self.data[start..end].iter().cloned()))
         }
     }
 
 
     //not really needed, and no idea how to implement.
-    fn substream(&self, _start: i64, _end: i64) -> Option<Substream<File>> {
+    fn substream(&self, _start: i64, _end: i64) -> Result<Substream<File>, StorageSystemError> {
+        //todo, also requires different trait type
         unimplemented!()
     }
 }

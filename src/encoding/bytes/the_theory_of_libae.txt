@@ -1,3 +1,5 @@
+Author: jokrey
+
 LIbae <=> Length-Indicator based byte array encoding
 Simple, low-level byte encoder.
 
@@ -44,7 +46,7 @@ A LIbae implementation has to have the following methods:
 
 Notes:		
 Actual method names can vary. Rust for example doesn't allow methods with the same name in a single Trait.
-Error handling is dependent on language, but should obviously exist where needed.
+Error handeling is dependent on language, but should obviously exist where needed.
     However, this can be said:
 		The Storage System should throw or relay any internal errors to the caller.
 		If libae cannot find another element(because the end was reached) it should return null(or None or whatever, but generally not throw an exception(if that exists in the language))
