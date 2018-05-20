@@ -1,0 +1,61 @@
+Author: jokrey
+
+arbae <=> Authenticated Remote Byte Array Encoder
+
+Adds user's to the rbae protocol.
+
+Meaning that a client can now specify a user name and a password and then only see the changes of people that know that specific username - password combination.
+From that point on it should feel like a normal ubae system(implementing all the normal things).
+
+The server on the other hand should still feel like a normal ubae system.
+Any methods should work and yield valid data.
+The server should also have convenience methods to view the data of specific users.
+    (get_user_tags(user_name), get_user_entry(user_name, tag), add_user_entry(user_name, tag, entry) ETC...)
+    This is required because there is a specific way to store user data, we'll come to that later.
+Out of the box, NO data will be encrypted for the server. Meaning the server can read everything.
+Actually even a packet sniffer could still read at least the data side of the communication(tags are encrypted for authentication).
+However any data passed into the system could of course be encrypted. It would add some security where required, but also obviously take the server ability to read data.
+
+Typical Usage:
+A client can connect either by logging in or by registering. If a client tries to register with the correct password then it is automatically logged in.
+    (Technically logging in is a useless step, since registering does the same and more.
+     However the distinction is important because if a user types in a wrong user name at login we don't want to instantly register a new user...)
+From then on out the client feels like a rbae
+
+Implementation:
+It is basically rbae(see the_theory_of_rbae.txt) but with the added authentication layer.
+   Each step of which should be kept in a concise, separate "AuthenticationHelper" module. (see Authentication)
+Before a new client connection goes into the "waiting for cause"-loop one step is added:
+   On login the send username and password(encrypted, see Authentication) are compared against the database
+   On register the send username and password are added, should they not already exist
+
+
+
+Authentication:
+At login time a session key is generated using the elliptic curve diffie-hellman key exchange scheme.
+That session key(combined with one the fly generated nonce's) is used to encrypt data and authenticate requests.
+  The first encrypted piece of information is always the password that has to be checked against the database.
+  The client should hash that(sha256) before sending it(even though the connection is encrypted), just so the server admin cannot see the plaintext password.
+Exact implementation of each request protocol should be viewed in one of the working implementations(authentication_helper->send_tag/receive_tag), but just a couple of notes on design here:
+The authentication is done by concatenating the generated nonce(generation done before each encryption) with the tag the user wants to alter or receive.
+The combined array is then encrypted using aes(mode: crt, padding: no_padding, key-size: 128bit).
+On the other side it can be decrypted and the first 16 nonce bytes can be compared against the real nonce received in plain.
+    This cannot be emulated by an attacker because the session key is unknown to them.
+    They may intercept the plain text nonce, but they cannot emulate the encryption process that would result in correct decryption on server side.
+
+Storage:
+Since user's are not supposed to feel the presence of other user's their tag's have to be somehow altered to make them unique to them.
+This is done by simply sha1 hashing the user_names utf-8 decoded bytes and then using base64 to get a string representation.
+Now every tag the client want's to alter has to start with that rather abstract representation of it's username.
+It is important to note that every base64(sha1(user_name))-string has the exact same length.
+This is important. Otherwise a user with the name "bob" could alter entries of the user "bobby", but simply trying to alter one of his tags, but adding "by"- as a prefix.
+
+Where to store the user passwords?
+Obviously we want to store it in the same database as everybody else.
+And it has to be once again unique to each user, but not accessible by any user.
+The solution:
+Use the normal user hash, but prefix it with "#*". This allows NO user access, because none of their user names could possibly start with neither '#' nor '*'.
+  Simply because base64's character set doesn't include them.
+
+Thread safety:
+The same issues and guarantees as Rbae are mandatory to keep in check.
