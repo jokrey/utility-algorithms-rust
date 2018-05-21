@@ -8,7 +8,7 @@ use std;
 use std::fmt;
 use std::convert::From;
 
-//todo do a substream of a read(not a way to specific "File" type) of sorts.. I know it's weirdly hard.
+//todo do a substream of a read(not a way to specific "File" type) of sorts.. Looks ugly with generics
 pub trait StorageSystem {
     /// sets the content of this entire system.
     /// The following condition should hold true

@@ -116,7 +116,7 @@ impl StorageSystem for VecStorageSystem {
 
     //not really needed, and no idea how to implement.
     fn substream(&self, _start: i64, _end: i64) -> Result<Substream<File>, StorageSystemError> {
-        //todo, also requires different trait type
+        //todo, also requires different trait type - can be done quite easily with generics, but looks pretty terrible
         unimplemented!()
     }
 }
