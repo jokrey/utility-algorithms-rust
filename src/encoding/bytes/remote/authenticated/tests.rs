@@ -8,7 +8,6 @@ use std::path::Path;
 use std::thread;
 use std::time::Duration;
 use encoding::bytes::remote::authenticated::arbae::Arbae;
-use encoding::bytes::remote::authenticated::arbae_server;
 use encoding::bytes::remote::authenticated::arbae_server::ArbaeServer;
 use encoding::bytes::remote::authenticated::arbae_mcnp_causes;
 use std::vec::Vec;
@@ -20,13 +19,13 @@ fn arbae_test() {
 
     let arbae_storage_file = env::home_dir().unwrap().join(Path::new("Desktop/authenticated_rbae_storage_file.txt"));
     let arbae_storage_path = arbae_storage_file.to_str().unwrap();
-    let mut arbae_server = ArbaeServer::new(PORT, Ubae::new(FileStorageSystem::create_leave_source_intact(arbae_storage_path)));
+    let mut arbae_server = ArbaeServer::new_arbae(PORT, Ubae::new(FileStorageSystem::create_leave_source_intact(arbae_storage_path)));
     arbae_server.set_content(&[]).expect("clearing content failed");
 
     let arbae_clone_for_thread = arbae_server.clone();
     let _joinhandle =
         thread::spawn(|| {
-            arbae_server::run_logic_loop(arbae_clone_for_thread);
+            arbae_clone_for_thread.run_logic_loop();
         });
 
     thread::sleep(Duration::from_millis(2000));

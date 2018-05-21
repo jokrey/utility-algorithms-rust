@@ -9,6 +9,8 @@ use std::env;
 use std::path::Path;
 use std::thread;
 use std::time::Duration;
+use network::mcnp::mcnp_connection::McnpConnectionTraits;
+use std::str;
 
 
 #[test]
@@ -17,12 +19,17 @@ fn rbae_test() {
 
     let rbae_storage_file = env::home_dir().unwrap().join(Path::new("Desktop/rbae_storage_file.txt"));
     let rbae_storage_path = rbae_storage_file.to_str().unwrap();
-    let mut rbae_server = rbae_server::RbaeServer::new(PORT, Ubae::new(FileStorageSystem::create_leave_source_intact(rbae_storage_path)));
+    let mut rbae_server = rbae_server::RbaeServer::new_rbae(PORT, Ubae::new(FileStorageSystem::create_leave_source_intact(rbae_storage_path)));
+
+    rbae_server.add_cause_handler(667, |_, state| {
+        println!("Client send what is assumed to be some log message: {}", str::from_utf8(&state.read_variable_chunk().expect("server custom receive from client failed")).unwrap());
+        Ok(())
+    });
 
     let rbae_clone_for_thread = rbae_server.clone();
     let _joinhandle =
         thread::spawn(|| {
-            rbae_server::run_logic_loop(rbae_clone_for_thread);
+            rbae_clone_for_thread.run_logic_loop();
         });
 
     thread::sleep(Duration::from_millis(2000));
@@ -64,6 +71,10 @@ fn rbae_test() {
 
         //client sees server
         assert_eq!(val1, rbae.get_entry("test").unwrap().unwrap());
+
+        //client can send independant from server communication:
+        rbae.client.send_cause(667).unwrap();
+        rbae.client.send_variable_chunk("whats up. I am a client.".as_bytes()).unwrap();
     }
 
 

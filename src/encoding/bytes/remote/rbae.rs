@@ -13,7 +13,11 @@ use encoding::bytes::vec_storage_system::VecStorageSystem;
 use encoding::bytes::libae::LIbaeTraits;
 
 pub struct Rbae {
-    client:McnpConnection
+    ///public to allow direct communication with the server. Obviously this should only be used if one knows exactly what is happening
+    /// In any case any communication has to start with a custom cause that does not conflict with any of the already assigned causes.
+    /// If a client does custom communication - then the coder has to add an inverse matching communication pattern on server side
+    ///   (via add_cause_handler)
+    pub client:McnpConnection
 }
 impl Rbae {
     /// Creates a new ubae system with the provided storage system.
