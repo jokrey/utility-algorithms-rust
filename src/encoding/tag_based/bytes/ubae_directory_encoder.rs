@@ -1,12 +1,12 @@
 extern crate core;
 
-use encoding::bytes::ubae::Ubae;
-use encoding::bytes::file_storage_system::FileStorageSystem;
-use encoding::bytes::ubae::UbaeTraits;
+use encoding::tag_based::bytes::ubae::Ubae;
+use transparent_storage::bytes::file_storage_system::FileStorageSystem;
+use encoding::tag_based::bytes::ubae::UbaeTraits;
 use std::path::PathBuf;
 use std::fs;
 use std::fs::File;
-use encoding::bytes::libae_storage_system::StorageSystem;
+use transparent_storage::StorageSystem;
 use std::path::Path;
 use std::io;
 

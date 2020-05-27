@@ -1,10 +1,10 @@
-use encoding::bytes::file_storage_system::FileStorageSystem;
-use encoding::bytes::ubae::Ubae;
-use encoding::bytes::ubae::UbaeTraits;
-use encoding::bytes::remote::rbae::Rbae;
-use encoding::bytes::remote::rbae_server;
-use encoding::bytes::remote::rbae_mcnp_causes;
-use encoding::bytes::remote::rbae_observer;
+use transparent_storage::bytes::file_storage_system::FileStorageSystem;
+use encoding::tag_based::bytes::ubae::Ubae;
+use encoding::tag_based::bytes::ubae::UbaeTraits;
+use encoding::tag_based::bytes::remote::rbae::Rbae;
+use encoding::tag_based::bytes::remote::rbae_server;
+use encoding::tag_based::bytes::remote::rbae_mcnp_causes;
+use encoding::tag_based::bytes::remote::rbae_observer;
 use std::env;
 use std::path::Path;
 use std::thread;

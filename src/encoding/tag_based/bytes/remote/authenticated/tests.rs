@@ -1,17 +1,17 @@
 ///author: jokrey
 
-use encoding::bytes::file_storage_system::FileStorageSystem;
-use encoding::bytes::ubae::Ubae;
-use encoding::bytes::ubae::UbaeTraits;
+use transparent_storage::bytes::file_storage_system::FileStorageSystem;
+use encoding::tag_based::bytes::ubae::Ubae;
+use encoding::tag_based::bytes::ubae::UbaeTraits;
 use std::env;
 use std::path::Path;
 use std::thread;
 use std::time::Duration;
-use encoding::bytes::remote::authenticated::arbae::Arbae;
-use encoding::bytes::remote::authenticated::arbae_server::ArbaeServer;
-use encoding::bytes::remote::authenticated::arbae_mcnp_causes;
+use encoding::tag_based::bytes::remote::authenticated::arbae::Arbae;
+use encoding::tag_based::bytes::remote::authenticated::arbae_server::ArbaeServer;
+use encoding::tag_based::bytes::remote::authenticated::arbae_mcnp_causes;
 use std::vec::Vec;
-use encoding::bytes::remote::authenticated::arbae_observer;
+use encoding::tag_based::bytes::remote::authenticated::arbae_observer;
 
 #[test]
 fn arbae_test() {

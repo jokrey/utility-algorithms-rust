@@ -1,5 +1,5 @@
 use std::io;
-use encoding::bytes::remote::rbae_mcnp_causes;
+use encoding::tag_based::bytes::remote::rbae_mcnp_causes;
 use network::mcnp::mcnp_client::McnpClient;
 use network::mcnp::mcnp_connection::McnpConnectionTraits;
 

@@ -15,7 +15,7 @@ use crypto::symmetriccipher::SynchronousStreamCipher;
 use network::mcnp::mcnp_connection::McnpConnection;
 use std::str;
 use network::mcnp::mcnp_connection::McnpConnectionTraits;
-use encoding::bytes::libae_storage_system::StorageSystemError;
+use transparent_storage::StorageSystemError;
 
 
 //ECDH Key Agreement

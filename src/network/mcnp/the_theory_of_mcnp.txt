@@ -18,6 +18,9 @@ After that both sides have to each know exactly what kind of data the other one 
 |           Client            |            Server            |
 |                             |    waitForNewConnection      |
 |     establishConnection     |  handleConnection(newThread) |
+|                             |     waitForInitialCause      |
+|     sendInitialCause        |      receiveInitialCause     |
+repeat n times:
 |                             |         waitForCause         |
 |         sendCause           |         receiveCause         |
 |                             |          waitForInt          |
@@ -25,6 +28,7 @@ After that both sides have to each know exactly what kind of data the other one 
 |         waitForInt          |      doOperationOnX (x*x)    |
 |         receiveInt          |         sendInt (x*x)        |
 |                             | waitForChunkOfVariableLength |
+end repeat
 |      closeConnection        | closeConnection(finishThread)|
 
 More complex, simultaneous, two way communication (for a example a game server may need), can also be achieved using this protocol.
@@ -35,18 +39,9 @@ More complex, simultaneous, two way communication (for a example a game server m
 
 MCNP <=> Multi Chunk Network Protocol
 
-An mcnp api has to have/support:
-  RAW:
-    The following "raw" data types:
-      uint8, int16, int32, int64, float32, float64, uint8array
-            (if all of them are required <any_data_type> will be noted)
-
-  Fixed Chunk transfer functionality (7x for all data types):
-    - send_fixed_chunk_<any_data_type>(<any_data_type>)
-    - read_fixed_chunk_<any_data_type>() <any_data_type>
-
-  
-
+An mcnp api has to support:
+  Should support sending any data type over the specified serialization in RawToFromTransformer.
+  Can support special methods for those datatypes. Semantic mcnp functionality requires sending and receiving: bytes, int32, int64
 
   SEMANTIC WRAPPERS:
     Cause functionality:
@@ -59,7 +54,8 @@ An mcnp api has to have/support:
         - send_variable_chunk_part(uint8array)
            send_fixed_chunk_uint8array
         - read_variable_chunk() uint8array
-           more complex
+           length = read_fixed_int64
+           read_fixed(length)
 
     OPTIONALS and comfort functionality:
       - send_variable_array(uint8array)
@@ -69,3 +65,45 @@ An mcnp api has to have/support:
       - send_variable_utf8(utf8)
          convert_utf8 & start_chunk & send_fixed_chunk_uint8array
       - read_variable_utf8() utf8
+
+
+
+
+
+
+Test:
+  server listening to port 17731
+  server responding to initial connection cause 1:
+     read 1 byte
+     echo 1 byte
+  server responding to cause 12, for initial cause 1:
+      read 1 byte
+      read and store 4 bytes as int32
+      read 8 bytes (i64)
+      read 8 bytes (f64)
+      echo i32
+  server responding to cause 8, for initial cause 1:
+      read variable bytes
+      echo bytes
+      read variable bytes as string
+      echo string
+      read variable (null/none type)
+
+  client connecting to port 17731
+  !! client connecting with initial cause 1
+     r = 1 random byte
+     client sending r
+     client read 1 byte assert == r
+   ! client send cause 12
+     client send 1 byte
+     i32 = 1 random i32
+     client send i32
+     client send i64
+     client send f64
+     client read 4 bytes as int32 assert = i32
+   ! client send cause 8
+     client send variable, random bytes
+     stringx = 1 random string
+     client send stringx
+     client read variable bytes as string assert = stringx
+     client send null type

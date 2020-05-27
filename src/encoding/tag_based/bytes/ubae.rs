@@ -1,10 +1,10 @@
 use super::libae::LIbae;
 use super::libae::LIbaeTraits;
-use super::libae_storage_system::StorageSystem;
+use transparent_storage::StorageSystem;
 use std::io::Read;
-use super::Substream;
+use transparent_storage::Substream;
 use std::fs::File;
-use encoding::bytes::libae_storage_system::StorageSystemError;
+use transparent_storage::StorageSystemError;
 
 /// Minimum traits required to meet protocol standards
 ///   Missing convenience wrappers for data types as of now.

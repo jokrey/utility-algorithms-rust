@@ -1,10 +1,10 @@
-use encoding::bytes::libae::LIbae;
-use encoding::bytes::libae::LIbaeTraits;
-use encoding::bytes::vec_storage_system::VecStorageSystem;
-use encoding::bytes::file_storage_system::FileStorageSystem;
-use encoding::bytes::libae_storage_system::StorageSystem;
-use encoding::bytes::ubae::Ubae;
-use encoding::bytes::ubae::UbaeTraits;
+use encoding::tag_based::bytes::libae::LIbae;
+use encoding::tag_based::bytes::libae::LIbaeTraits;
+use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
+use transparent_storage::bytes::file_storage_system::FileStorageSystem;
+use transparent_storage::StorageSystem;
+use encoding::tag_based::bytes::ubae::Ubae;
+use encoding::tag_based::bytes::ubae::UbaeTraits;
 use std::fs::File;
 use std::fs;
 use std::io::Read;
@@ -14,7 +14,7 @@ use std::io::BufReader;
 use time_keeper::TimeKeeper;
 use std::env;
 use std::path::Path;
-use encoding::bytes::ubae_directory_encoder;
+use encoding::tag_based::bytes::ubae_directory_encoder;
 
 #[test]
 fn test_li_encoding() {

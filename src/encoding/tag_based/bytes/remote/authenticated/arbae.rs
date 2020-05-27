@@ -1,18 +1,18 @@
-use encoding::bytes::ubae::UbaeTraits;
+use encoding::tag_based::bytes::ubae::UbaeTraits;
 use network::mcnp::mcnp_client::McnpClient;
 use network::mcnp::mcnp_connection::McnpConnection;
 use network::mcnp::mcnp_connection::McnpConnectionTraits;
 use std::io::Read;
 use std;
 use std::net::TcpStream;
-use encoding::bytes::Substream;
-use encoding::bytes::libae_storage_system::StorageSystemError;
-use encoding::bytes::libae::LIbae;
-use encoding::bytes::vec_storage_system::VecStorageSystem;
-use encoding::bytes::libae::LIbaeTraits;
-use encoding::bytes::remote::rbae_mcnp_causes;
-use encoding::bytes::remote::authenticated::arbae_mcnp_causes;
-use encoding::bytes::remote::authenticated::authentication_helper;
+use transparent_storage::Substream;
+use transparent_storage::StorageSystemError;
+use encoding::tag_based::bytes::libae::LIbae;
+use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
+use encoding::tag_based::bytes::libae::LIbaeTraits;
+use encoding::tag_based::bytes::remote::rbae_mcnp_causes;
+use encoding::tag_based::bytes::remote::authenticated::arbae_mcnp_causes;
+use encoding::tag_based::bytes::remote::authenticated::authentication_helper;
 
 //todo. maybe create buffers for nonce, and encrypted_message buffer, though it very much is fast enough for now...
 

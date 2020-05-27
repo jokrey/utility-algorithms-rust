@@ -1,23 +1,23 @@
 extern crate ring;
 extern crate untrusted;
 
-use encoding::bytes::ubae::Ubae;
-use encoding::bytes::file_storage_system::FileStorageSystem;
+use encoding::tag_based::bytes::ubae::Ubae;
+use transparent_storage::bytes::file_storage_system::FileStorageSystem;
 use network::mcnp::mcnp_connection::McnpConnection;
 use network::mcnp::mcnp_connection::McnpConnectionTraits;
 use std::str;
-use encoding::bytes::remote::rbae_mcnp_causes;
-use encoding::bytes::ubae::UbaeTraits;
-use encoding::bytes::libae::LIbae;
-use encoding::bytes::libae::LIbaeTraits;
-use encoding::bytes::vec_storage_system::VecStorageSystem;
-use encoding::bytes::libae_storage_system::StorageSystemError;
+use encoding::tag_based::bytes::remote::rbae_mcnp_causes;
+use encoding::tag_based::bytes::ubae::UbaeTraits;
+use encoding::tag_based::bytes::libae::LIbae;
+use encoding::tag_based::bytes::libae::LIbaeTraits;
+use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
+use transparent_storage::StorageSystemError;
 use std::io::Read;
-use encoding::bytes::Substream;
+use transparent_storage::Substream;
 use std::fs::File;
-use encoding::bytes::remote::rbae_server::RbaeServer;
-use encoding::bytes::remote::authenticated::authentication_helper;
-use encoding::bytes::remote::authenticated::arbae_mcnp_causes;
+use encoding::tag_based::bytes::remote::rbae_server::RbaeServer;
+use encoding::tag_based::bytes::remote::authenticated::authentication_helper;
+use encoding::tag_based::bytes::remote::authenticated::arbae_mcnp_causes;
 use std::error::Error;
 use std::sync::MutexGuard;
 use std::thread;
@@ -28,10 +28,10 @@ use std::sync::Mutex;
 //todo implement authentication where the pseudo tag authentication doesn't apply(for example in unregister).
 
 pub struct ArbaeConnectionState {
-    connection:McnpConnection,
-    user_name:String,
-    user_name_hash:String,
-    session_key:Vec<u8>
+    pub connection:McnpConnection,
+    pub user_name:String,
+    pub user_name_hash:String,
+    pub session_key:Vec<u8>
 }
 pub type ArbaeServer = RbaeServer<ArbaeObserverConnection, ArbaeConnectionState>;
 impl ArbaeServer {
@@ -130,7 +130,6 @@ impl ArbaeServer {
         };
 
         println!("new connection authenticated - Auth-User: {}", state.user_name);
-//    println!("Raw AES Sess-Key(128bit): {:?}", name_hash_sk.2); //just for debugging DO NOT KEEP IN PRODUCTION
 
         loop {
             match state.connection.read_cause() {

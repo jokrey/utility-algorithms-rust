@@ -4,8 +4,9 @@ use std::io::Read;
 use std::cmp;
 use std::io::Cursor;
 use self::byteorder::{BigEndian, ReadBytesExt};
-use super::libae_storage_system::{StorageSystem, StorageSystemError};
-use super::Substream;
+use transparent_storage::{StorageSystem, StorageSystemError};
+use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
+use transparent_storage::Substream;
 use std::fs::File;
 
 pub trait LIbaeTraits {
@@ -15,10 +16,10 @@ pub trait LIbaeTraits {
     fn li_encode_single(&mut self, bytes : &[u8]) -> Result<(), StorageSystemError>;
     fn li_encode_single_stream(&mut self, stream : &mut Read, stream_length:i64) -> Result<(), StorageSystemError>;
 
-    fn reset_read_pointer(&mut self);
-
     fn li_decode_single(&mut self) -> Option<Vec<u8>>;
     fn li_decode_single_stream(&mut self) -> Option<(Substream<File>, i64)>;
+
+    fn reset_read_pointer(&mut self);
 
     fn li_delete_single(&mut self) -> Option<Vec<u8>>;
     fn li_skip_single(&mut self) -> i64;
@@ -43,6 +44,22 @@ impl<T:StorageSystem> LIbae<T> {
 
     pub fn manually_get_read_pointer(&self) -> i64 {
         return self.read_pointer
+    }
+}
+impl LIbae<VecStorageSystem> {
+    pub fn ram() -> LIbae<VecStorageSystem> {
+        return LIbae {
+            read_pointer:0,
+            storage_system: VecStorageSystem::new_empty(),
+        }
+    }
+}
+
+impl<T:StorageSystem> Iterator for LIbae<T> {
+    type Item = (Vec<u8>);
+
+    fn next(&mut self) -> Option<<Self as Iterator>::Item> {
+        self.li_decode_single()
     }
 }
 

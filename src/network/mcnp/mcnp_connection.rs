@@ -5,7 +5,7 @@ use std::io::*;
 use std::io::Write;
 use core::str::FromStr;
 use self::byteorder::{ByteOrder, BigEndian};
-use encoding::bytes::Substream;
+use transparent_storage::Substream;
 
 pub trait McnpConnectionTraits {
     fn send_fixed_chunk_u8(&mut self, val:u8) -> Result<()>;
@@ -96,64 +96,43 @@ impl McnpConnectionTraits for McnpConnection {
 
     fn read_fixed_chunk_u8(&mut self) -> Result<u8> {
         let mut buf = [0_u8; 1];
-        match self.socket.read(&mut buf) {
-            Ok(1)   => return Ok(buf[0]),
-            Err(e)  => return Err(e),
-            _       => return Err(Error::new(ErrorKind::Other, "read wrong number of bytes"))
-        }
+        self.socket.read_exact(&mut buf)?;
+        Ok(buf[0])
     }
 
     fn read_fixed_chunk_i16(&mut self) -> Result<i16> {
         let mut buf = [0_u8; 2];
-        match self.socket.read(&mut buf) {
-            Ok(2)   => return Ok(BigEndian::read_i16(&buf)),
-            Err(e)  => return Err(e),
-            _       => return Err(Error::new(ErrorKind::Other, "read wrong number of bytes"))
-        }
+        self.socket.read_exact(&mut buf)?;
+        Ok(BigEndian::read_i16(&buf))
     }
 
     fn read_fixed_chunk_i32(&mut self) -> Result<i32> {
         let mut buf = [0_u8; 4];
-        match self.socket.read(&mut buf) {
-            Ok(4)   =>  return Ok(BigEndian::read_i32(&buf)),
-            Err(e)  => return Err(e),
-            _       => return Err(Error::new(ErrorKind::Other, "read wrong number of bytes"))
-        }
+        self.socket.read_exact(&mut buf)?;
+        Ok(BigEndian::read_i32(&buf))
     }
 
     fn read_fixed_chunk_i64(&mut self) -> Result<i64> {
         let mut buf = [0_u8; 8];
-        match self.socket.read(&mut buf) {
-            Ok(8)   => return Ok(BigEndian::read_i64(&buf)),
-            Err(e)  => return Err(e),
-            _       => return Err(Error::new(ErrorKind::Other, "read wrong number of bytes"))
-        }
+        self.socket.read_exact(&mut buf)?;
+        Ok(BigEndian::read_i64(&buf))
     }
 
     fn read_fixed_chunk_f32(&mut self) -> Result<f32> {
         let mut buf = [0_u8; 4];
-        match self.socket.read(&mut buf) {
-            Ok(4)   => return Ok(BigEndian::read_f32(&buf)),
-            Err(e)  => return Err(e),
-            _       => return Err(Error::new(ErrorKind::Other, "read wrong number of bytes"))
-        }
+        self.socket.read_exact(&mut buf)?;
+        Ok(BigEndian::read_f32(&buf))
     }
 
     fn read_fixed_chunk_f64(&mut self) -> Result<f64> {
         let mut buf = [0_u8; 8];
-        match self.socket.read(&mut buf) {
-            Ok(8)   => return Ok(BigEndian::read_f64(&buf)),
-            Err(e)  => return Err(e),
-            _       => return Err(Error::new(ErrorKind::Other, "read wrong number of bytes"))
-        }
+        self.socket.read_exact(&mut buf)?;
+        Ok(BigEndian::read_f64(&buf))
     }
 
     fn read_fixed_chunk_u8_arr(&mut self, bytes_to_read: usize) -> Result<Vec<u8>> {
         let mut buf = vec![0u8; bytes_to_read];
-        let bytes_read = self.socket.read(&mut buf)?;
-        if bytes_read != bytes_to_read {
-            return Err(Error::new(ErrorKind::Other, "bytes_read != bytes_to_read"));
-        }
+        self.socket.read_exact(&mut buf)?;
         return Ok(buf)
     }
 

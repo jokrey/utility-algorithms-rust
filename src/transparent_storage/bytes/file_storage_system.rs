@@ -1,12 +1,12 @@
 use std::cmp;
 use std::io::Read;
-use super::libae_storage_system::StorageSystem;
-use super::libae_storage_system::StorageSystemError;
+use transparent_storage::StorageSystem;
+use transparent_storage::StorageSystemError;
 use std::io::Write;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::fs::{File, OpenOptions};
-use super::Substream;
+use transparent_storage::Substream;
 
 pub struct FileStorageSystem {
     file:File,  //has to be properly instantiated allowing read and write.

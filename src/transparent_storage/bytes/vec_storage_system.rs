@@ -1,12 +1,13 @@
 use std::io::Read;
 use std::cmp;
-use super::libae_storage_system::StorageSystem;
-use super::libae_storage_system::StorageSystemError;
+use transparent_storage::StorageSystem;
+use transparent_storage::StorageSystemError;
 use std::fs::File;
-use super::Substream;
+use transparent_storage::Substream;
 use core::ptr;
 use core::iter::FromIterator;
 
+//larger cache, too avoid reallocation
 pub struct VecStorageSystem {
     data:Vec<u8>
 }

@@ -1,4 +1,4 @@
-use encoding::bytes::ubae::UbaeTraits;
+use encoding::tag_based::bytes::ubae::UbaeTraits;
 use network::mcnp::mcnp_client::McnpClient;
 use network::mcnp::mcnp_connection::McnpConnection;
 use network::mcnp::mcnp_connection::McnpConnectionTraits;
@@ -6,11 +6,11 @@ use super::rbae_mcnp_causes;
 use std::io::Read;
 use std;
 use std::net::TcpStream;
-use encoding::bytes::Substream;
-use encoding::bytes::libae_storage_system::StorageSystemError;
-use encoding::bytes::libae::LIbae;
-use encoding::bytes::vec_storage_system::VecStorageSystem;
-use encoding::bytes::libae::LIbaeTraits;
+use transparent_storage::Substream;
+use transparent_storage::StorageSystemError;
+use encoding::tag_based::bytes::libae::LIbae;
+use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
+use encoding::tag_based::bytes::libae::LIbaeTraits;
 
 pub struct Rbae {
     ///public to allow direct communication with the server. Obviously this should only be used if one knows exactly what is happening

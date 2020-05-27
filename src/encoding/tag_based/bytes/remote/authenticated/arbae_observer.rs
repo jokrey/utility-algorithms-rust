@@ -1,9 +1,9 @@
 use std::io;
-use encoding::bytes::remote::rbae_mcnp_causes;
-use encoding::bytes::remote::authenticated::arbae_mcnp_causes;
-use encoding::bytes::remote::authenticated::authentication_helper;
+use encoding::tag_based::bytes::remote::rbae_mcnp_causes;
+use encoding::tag_based::bytes::remote::authenticated::arbae_mcnp_causes;
+use encoding::tag_based::bytes::remote::authenticated::authentication_helper;
 use network::mcnp::mcnp_connection::McnpConnectionTraits;
-use encoding::bytes::remote::authenticated::arbae;
+use encoding::tag_based::bytes::remote::authenticated::arbae;
 use std::error::Error;
 
 pub fn new_remote_update_callback_receiver(addr:&str, port:u16, user_name:&str, password:&str,
