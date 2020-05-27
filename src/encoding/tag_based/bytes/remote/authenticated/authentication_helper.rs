@@ -24,10 +24,12 @@ pub fn generate_private_key() -> Result<agreement::EphemeralPrivateKey, error::U
 }
 ///allocates space on the heap, if that is undesired copy paste this code
 pub fn compute_public_key(private_key:&agreement::EphemeralPrivateKey) -> Result<Vec<u8>, error::Unspecified> {
-    let mut my_public_key = [0u8; agreement::PUBLIC_KEY_MAX_LEN];
-    let my_public_key = &mut my_public_key[..private_key.public_key_len()];
-    private_key.compute_public_key(my_public_key)?;
-    Ok(Vec::from(my_public_key))
+    // let mut my_public_key = [0u8; agreement::PUBLIC_KEY_MAX_LEN]; // agreement::PUBLIC_KEY_MAX_LEN was before - should not be higher than 1024
+    // let my_public_key = &mut my_public_key[..private_key.public_key_len()];
+    // private_key.compute_public_key(my_public_key)?;
+    // Ok(Vec::from(my_public_key))
+
+    Ok(Vec::from(private_key.compute_public_key()?.as_ref()))
 }
 pub fn generate_secure_secret(shared_secret:&[u8], pub_key_1:&[u8], pub_key_2:&[u8]) -> digest::Digest {
     let mut pub1bigger:Option<bool> = None;
@@ -74,7 +76,7 @@ pub fn aes_crt_np_128_decrypt(message:&[u8], key:&[u8], nonce:&[u8]) -> Vec<u8> 
 }
 
 pub fn do_key_exchange(private_key:agreement::EphemeralPrivateKey, my_public_key:&[u8], received_remote_public_key:&[u8]) -> Result<Vec<u8>, ring::error::Unspecified> {
-    agreement::agree_ephemeral(private_key, &agreement::ECDH_P256,untrusted::Input::from(&received_remote_public_key), ring::error::Unspecified,
+    agreement::agree_ephemeral(private_key, &agreement::UnparsedPublicKey::new(&agreement::ECDH_P256, received_remote_public_key), ring::error::Unspecified,
                                |key_material| {
                                    let generated_secure_secret = generate_secure_secret(key_material, my_public_key, &received_remote_public_key);
                                    Ok(Vec::from(generated_secure_secret.as_ref()))
@@ -85,7 +87,7 @@ pub fn sha256(message:&[u8]) -> Vec<u8> {
     Vec::from(digest::digest(&digest::SHA256, message).as_ref())
 }
 pub fn sha1(message:&[u8]) -> Vec<u8> {
-    Vec::from(digest::digest(&digest::SHA1, message).as_ref())
+    Vec::from(digest::digest(&digest::SHA1_FOR_LEGACY_USE_ONLY, message).as_ref())
 }
 pub fn base64(message:&[u8]) -> String {
     base64::encode(message)
