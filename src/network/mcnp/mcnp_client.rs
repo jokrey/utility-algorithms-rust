@@ -1,7 +1,7 @@
-use super::mcnp_connection::McnpConnection;
-use std::net::*;
 use core::str::FromStr;
+use std::net::*;
 
+use super::mcnp_connection::McnpConnection;
 
 //semantic stuff
 

@@ -1,18 +1,19 @@
+use std;
+use std::io::Read;
+use std::net::TcpStream;
+
+use encoding::tag_based::bytes::libae::LIbae;
+use encoding::tag_based::bytes::libae::LIbaeTraits;
+use encoding::tag_based::bytes::remote::authenticated::arbae_mcnp_causes;
+use encoding::tag_based::bytes::remote::authenticated::authentication_helper;
+use encoding::tag_based::bytes::remote::rbae_mcnp_causes;
 use encoding::tag_based::bytes::ubae::UbaeTraits;
 use network::mcnp::mcnp_client::McnpClient;
 use network::mcnp::mcnp_connection::McnpConnection;
 use network::mcnp::mcnp_connection::McnpConnectionTraits;
-use std::io::Read;
-use std;
-use std::net::TcpStream;
-use transparent_storage::Substream;
-use transparent_storage::StorageSystemError;
-use encoding::tag_based::bytes::libae::LIbae;
 use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
-use encoding::tag_based::bytes::libae::LIbaeTraits;
-use encoding::tag_based::bytes::remote::rbae_mcnp_causes;
-use encoding::tag_based::bytes::remote::authenticated::arbae_mcnp_causes;
-use encoding::tag_based::bytes::remote::authenticated::authentication_helper;
+use transparent_storage::StorageSystemError;
+use transparent_storage::Substream;
 
 //todo. maybe create buffers for nonce, and encrypted_message buffer, though it very much is fast enough for now...
 
@@ -225,7 +226,7 @@ impl UbaeTraits<TcpStream> for Arbae {
     /// same as add_entry, but reads the entry from the provided stream.
     ///   if stream is not of stream length behaviour is mostly undefined.
     ///   Though the system will try not to break because of it.
-    fn add_entry_from_stream(&mut self, tag: &str, stream: &mut Read, stream_length: i64) -> Result<(), StorageSystemError> {
+    fn add_entry_from_stream(&mut self, tag: &str, stream: &mut dyn Read, stream_length: i64) -> Result<(), StorageSystemError> {
         self.client.send_cause(rbae_mcnp_causes::ADD_ENTRY_BYTE_ARR)?;
 
         authentication_helper::send_tag(&mut self.client, tag, &self.session_key)?;
@@ -242,7 +243,7 @@ impl UbaeTraits<TcpStream> for Arbae {
     ///   but the caller ensures us that the tag does not yet exist within the system.
     ///     this can provide a considerable speed up, since the system is not searched
     ///   If the caller is wrong decoding the added content may become hard to impossible.
-    fn add_entry_from_stream_nocheck(&mut self, tag: &str, stream: &mut Read, stream_length: i64) -> Result<(), StorageSystemError> {
+    fn add_entry_from_stream_nocheck(&mut self, tag: &str, stream: &mut dyn Read, stream_length: i64) -> Result<(), StorageSystemError> {
         self.client.send_cause(rbae_mcnp_causes::ADD_ENTRY_BYTE_ARR_NOCHECK)?;
 
         authentication_helper::send_tag(&mut self.client, tag, &self.session_key)?;

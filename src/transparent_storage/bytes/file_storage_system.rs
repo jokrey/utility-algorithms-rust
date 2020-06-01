@@ -1,11 +1,12 @@
 use std::cmp;
+use std::fs::{File, OpenOptions};
 use std::io::Read;
-use transparent_storage::StorageSystem;
-use transparent_storage::StorageSystemError;
-use std::io::Write;
 use std::io::Seek;
 use std::io::SeekFrom;
-use std::fs::{File, OpenOptions};
+use std::io::Write;
+
+use transparent_storage::StorageSystem;
+use transparent_storage::StorageSystemError;
 use transparent_storage::Substream;
 
 pub struct FileStorageSystem {
@@ -125,7 +126,7 @@ impl StorageSystem for FileStorageSystem {
 //        self.file.write_at(bytes, self.content_size());  apparently platform dependent for some bloody reason
     }
 
-    fn append_stream(&mut self, stream: &mut Read, stream_length: i64) -> Result<(), StorageSystemError> {
+    fn append_stream(&mut self, stream: &mut dyn Read, stream_length: i64) -> Result<(), StorageSystemError> {
         println!("file storage system append_stream");
         let content_size = self.content_size()?;
         let cont_length = content_size as u64;

@@ -1,9 +1,10 @@
+use core::str::FromStr;
 use std::net::*;
 use std::thread;
-use core::str::FromStr;
-use super::mcnp_connection::McnpConnection;
+
 use network::mcnp::mcnp_connection::McnpConnectionTraits;
-use std::error::Error;
+
+use super::mcnp_connection::McnpConnection;
 
 pub struct McnpServer {
     pub server_socket:TcpListener
@@ -46,7 +47,7 @@ impl McnpServer {
                             let concrete_cause = match con.read_cause() {
                                 Ok(cause) => cause,
                                 Err(e) => {
-                                    println!("{}",e.description());
+                                    println!("{}",e.to_string());
                                     break;
                                 }
                             };

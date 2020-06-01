@@ -1,16 +1,16 @@
 extern crate core;
 
-pub mod bytes;
-
-use std::io::Read;
-use std::fs::File;
-use std::error::Error;
 use std;
-use std::fmt;
-use std::convert::From;
-use std::io::SeekFrom;
-use std::io::Seek;
 use std::cmp;
+use std::convert::From;
+use std::error::Error;
+use std::fmt;
+use std::fs::File;
+use std::io::Read;
+use std::io::Seek;
+use std::io::SeekFrom;
+
+pub mod bytes;
 
 //todo do a substream of a read(not a way to specific "File" type) of sorts.. Looks ugly with generics
 pub trait StorageSystem {
@@ -35,7 +35,7 @@ pub trait StorageSystem {
     fn append(&mut self, bytes : &[u8]) -> Result<(), StorageSystemError>;
     ///copies all bytes from stream to the end of storage until stream_length is reached.
     /// If stream ends before stream_length is reached behaviour is undefined, though storage MAY pad the remaining bytes with something.
-    fn append_stream(&mut self, stream : &mut Read, stream_length:i64) -> Result<(), StorageSystemError>;
+    fn append_stream(&mut self, stream : &mut dyn Read, stream_length:i64) -> Result<(), StorageSystemError>;
 
     ///returns a copy of the bytes between start(incl) and end(excl)
     /// start has to be >= 0  and end < len

@@ -1,16 +1,18 @@
+use std;
+use std::io::Read;
+use std::net::TcpStream;
+
+use encoding::tag_based::bytes::libae::LIbae;
+use encoding::tag_based::bytes::libae::LIbaeTraits;
 use encoding::tag_based::bytes::ubae::UbaeTraits;
 use network::mcnp::mcnp_client::McnpClient;
 use network::mcnp::mcnp_connection::McnpConnection;
 use network::mcnp::mcnp_connection::McnpConnectionTraits;
-use super::rbae_mcnp_causes;
-use std::io::Read;
-use std;
-use std::net::TcpStream;
-use transparent_storage::Substream;
-use transparent_storage::StorageSystemError;
-use encoding::tag_based::bytes::libae::LIbae;
 use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
-use encoding::tag_based::bytes::libae::LIbaeTraits;
+use transparent_storage::StorageSystemError;
+use transparent_storage::Substream;
+
+use super::rbae_mcnp_causes;
 
 pub struct Rbae {
     ///public to allow direct communication with the server. Obviously this should only be used if one knows exactly what is happening
@@ -177,7 +179,7 @@ impl UbaeTraits<TcpStream> for Rbae {
     /// same as add_entry, but reads the entry from the provided stream.
     ///   if stream is not of stream length behaviour is mostly undefined.
     ///   Though the system will try not to break because of it.
-    fn add_entry_from_stream(&mut self, tag: &str, stream: &mut Read, stream_length: i64) -> Result<(), StorageSystemError> {
+    fn add_entry_from_stream(&mut self, tag: &str, stream: &mut dyn Read, stream_length: i64) -> Result<(), StorageSystemError> {
         self.client.send_cause(rbae_mcnp_causes::ADD_ENTRY_BYTE_ARR)?;
         self.client.send_variable_chunk(tag.as_bytes())?;
         self.client.send_variable_chunk_from_stream(stream, stream_length)?;
@@ -192,7 +194,7 @@ impl UbaeTraits<TcpStream> for Rbae {
     ///   but the caller ensures us that the tag does not yet exist within the system.
     ///     this can provide a considerable speed up, since the system is not searched
     ///   If the caller is wrong decoding the added content may become hard to impossible.
-    fn add_entry_from_stream_nocheck(&mut self, tag: &str, stream: &mut Read, stream_length: i64) -> Result<(), StorageSystemError> {
+    fn add_entry_from_stream_nocheck(&mut self, tag: &str, stream: &mut dyn Read, stream_length: i64) -> Result<(), StorageSystemError> {
         self.client.send_cause(rbae_mcnp_causes::ADD_ENTRY_BYTE_ARR_NOCHECK)?;
         self.client.send_variable_chunk(tag.as_bytes())?;
         self.client.send_variable_chunk_from_stream(stream, stream_length)?;

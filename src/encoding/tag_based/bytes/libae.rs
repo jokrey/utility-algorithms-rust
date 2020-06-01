@@ -1,20 +1,22 @@
 extern crate byteorder;
 
-use std::io::Read;
 use std::cmp;
+use std::fs::File;
 use std::io::Cursor;
-use self::byteorder::{BigEndian, ReadBytesExt};
+use std::io::Read;
+
 use transparent_storage::{StorageSystem, StorageSystemError};
 use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
 use transparent_storage::Substream;
-use std::fs::File;
+
+use self::byteorder::{BigEndian, ReadBytesExt};
 
 pub trait LIbaeTraits {
     fn set_content(&mut self, bytes : &[u8]) -> Result<(), StorageSystemError>;
     fn get_content(&mut self) -> Result<Vec<u8>, StorageSystemError>;
 
     fn li_encode_single(&mut self, bytes : &[u8]) -> Result<(), StorageSystemError>;
-    fn li_encode_single_stream(&mut self, stream : &mut Read, stream_length:i64) -> Result<(), StorageSystemError>;
+    fn li_encode_single_stream(&mut self, stream : &mut dyn Read, stream_length:i64) -> Result<(), StorageSystemError>;
 
     fn li_decode_single(&mut self) -> Option<Vec<u8>>;
     fn li_decode_single_stream(&mut self) -> Option<(Substream<File>, i64)>;
@@ -56,7 +58,7 @@ impl LIbae<VecStorageSystem> {
 }
 
 impl<T:StorageSystem> Iterator for LIbae<T> {
-    type Item = (Vec<u8>);
+    type Item = Vec<u8>;
 
     fn next(&mut self) -> Option<<Self as Iterator>::Item> {
         self.li_decode_single()
@@ -80,7 +82,7 @@ impl<T:StorageSystem> LIbaeTraits for LIbae<T> {
         }
     }
 
-    fn li_encode_single_stream(&mut self, stream: &mut Read, stream_length: i64) -> Result<(), StorageSystemError> {
+    fn li_encode_single_stream(&mut self, stream: &mut dyn Read, stream_length: i64) -> Result<(), StorageSystemError> {
         println!("li_encode_single_stream");
         self.storage_system.append(&get_length_indicator_for(stream_length)[..])?;
         println!("aft append li");
@@ -170,7 +172,7 @@ fn get_length_indicator_for(length:i64) -> Vec<u8> {
     return li_bytes_with_leading_li;
 }
 
-fn get_start_and_end_index_of_next_li_chunk(start_index:i64, storage_system:&mut StorageSystem) -> Option<(i64, i64)> {
+fn get_start_and_end_index_of_next_li_chunk(start_index:i64, storage_system:&mut dyn StorageSystem) -> Option<(i64, i64)> {
     if let Ok(content_size) = storage_system.content_size() { //threating content_size error as "last element reached"
         let mut i = start_index;
         if i + 1 > content_size {

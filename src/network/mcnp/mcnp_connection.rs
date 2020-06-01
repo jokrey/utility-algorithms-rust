@@ -1,11 +1,13 @@
 extern crate byteorder;
 
-use std::net::*;
+use core::str::FromStr;
 use std::io::*;
 use std::io::Write;
-use core::str::FromStr;
-use self::byteorder::{ByteOrder, BigEndian};
+use std::net::*;
+
 use transparent_storage::Substream;
+
+use self::byteorder::{BigEndian, ByteOrder};
 
 pub trait McnpConnectionTraits {
     fn send_fixed_chunk_u8(&mut self, val:u8) -> Result<()>;
@@ -36,7 +38,7 @@ pub trait McnpConnectionTraits {
     //optionals
     fn send_variable_chunk(&mut self, arr:&[u8]) -> Result<()>;
     fn read_variable_chunk_as_stream(&mut self) -> Result<(Substream<TcpStream>, i64)>;
-    fn send_variable_chunk_from_stream(&mut self, stream: &mut Read, stream_length:i64) -> Result<()>;
+    fn send_variable_chunk_from_stream(&mut self, stream: &mut dyn Read, stream_length:i64) -> Result<()>;
 }
 
 #[derive(Debug)]
@@ -182,7 +184,7 @@ impl McnpConnectionTraits for McnpConnection {
         return Ok((Substream::new_from_start(socket_clone, chunk_length as u64), chunk_length))
     }
 
-    fn send_variable_chunk_from_stream(&mut self, stream: &mut Read, stream_length:i64) -> Result<()> {
+    fn send_variable_chunk_from_stream(&mut self, stream: &mut dyn Read, stream_length:i64) -> Result<()> {
         match self.start_variable_chunk(stream_length) {
             Ok(_) => {
                 let buffer_size = 1024 * 4;

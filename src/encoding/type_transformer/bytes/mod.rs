@@ -1,17 +1,18 @@
 extern crate byteorder;
 
-use self::byteorder::{ByteOrder, BigEndian};
 use std;
+
 use encoding::tag_based::bytes::libae::LIbae;
 use encoding::tag_based::bytes::libae::LIbaeTraits;
+use encoding::type_transformer::bytes::booleans::detransform_booleans;
+use encoding::type_transformer::bytes::booleans::transform_booleans;
+
+use self::byteorder::{BigEndian, ByteOrder};
 
 ///:author jokrey
 
 #[cfg(test)]
 pub mod booleans;
-
-use encoding::type_transformer::bytes::booleans::transform_booleans;
-use encoding::type_transformer::bytes::booleans::detransform_booleans;
 
 trait Transform<SF> {
     fn transform(&self) -> SF;

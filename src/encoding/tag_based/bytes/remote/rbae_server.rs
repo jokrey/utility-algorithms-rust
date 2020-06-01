@@ -1,24 +1,25 @@
-use network::mcnp::mcnp_server::McnpServer;
-use encoding::tag_based::bytes::ubae::Ubae;
-use transparent_storage::bytes::file_storage_system::FileStorageSystem;
-use std::thread;
-use network::mcnp::mcnp_connection::McnpConnection;
-use network::mcnp::mcnp_connection::McnpConnectionTraits;
-use std::sync::Mutex;
-use std::sync::Arc;
-use encoding::tag_based::bytes::remote::rbae_mcnp_causes;
-use encoding::tag_based::bytes::ubae::UbaeTraits;
-use encoding::tag_based::bytes::libae::LIbae;
-use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
-use encoding::tag_based::bytes::libae::LIbaeTraits;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use transparent_storage::StorageSystemError;
-use std::io::Read;
-use transparent_storage::Substream;
-use std::fs::File;
-use std::sync::MutexGuard;
 use std;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::Read;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Mutex;
+use std::sync::MutexGuard;
+use std::thread;
+
+use encoding::tag_based::bytes::libae::LIbae;
+use encoding::tag_based::bytes::libae::LIbaeTraits;
+use encoding::tag_based::bytes::remote::rbae_mcnp_causes;
+use encoding::tag_based::bytes::ubae::Ubae;
+use encoding::tag_based::bytes::ubae::UbaeTraits;
+use network::mcnp::mcnp_connection::McnpConnection;
+use network::mcnp::mcnp_connection::McnpConnectionTraits;
+use network::mcnp::mcnp_server::McnpServer;
+use transparent_storage::bytes::file_storage_system::FileStorageSystem;
+use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
+use transparent_storage::StorageSystemError;
+use transparent_storage::Substream;
 
 pub struct RbaeServer<O, S>
     where O: std::marker::Send + Clone + PartialEq<O> {
@@ -80,7 +81,7 @@ impl <O: 'static, S: 'static> RbaeServer<O, S>
                     println!("new connection(number {}) from: {} - spawning thread to handle", total_number_of_connections, addr);
 
                     let mut alias = self.clone();
-                    let mut connection_count_clone = connection_count.clone();
+                    let connection_count_clone = connection_count.clone();
                     thread::Builder::new().name(format!("thread <connecting to: {}>", addr.to_string())).spawn(move || {
                         connection_count_clone.fetch_add(1, Ordering::Relaxed);
                         println!("spawned thread. number of currently connected clients: {}", connection_count_clone.load(Ordering::Relaxed));
@@ -537,13 +538,13 @@ impl<O, S> UbaeTraits<File> for RbaeServer<O, S>
         locked_ubae.add_entry_nocheck(tag, content)
     }
 
-    fn add_entry_from_stream(&mut self, tag: &str, stream: &mut Read, stream_length: i64) -> Result<(), StorageSystemError> {
+    fn add_entry_from_stream(&mut self, tag: &str, stream: &mut dyn Read, stream_length: i64) -> Result<(), StorageSystemError> {
         let ubae = self.ubae.clone();
         let mut locked_ubae = ubae.lock().unwrap();
         locked_ubae.add_entry_from_stream(tag, stream, stream_length)
     }
 
-    fn add_entry_from_stream_nocheck(&mut self, tag: &str, stream: &mut Read, stream_length: i64) -> Result<(), StorageSystemError> {
+    fn add_entry_from_stream_nocheck(&mut self, tag: &str, stream: &mut dyn Read, stream_length: i64) -> Result<(), StorageSystemError> {
         let ubae = self.ubae.clone();
         let mut locked_ubae = ubae.lock().unwrap();
         locked_ubae.add_entry_from_stream_nocheck(tag, stream, stream_length)

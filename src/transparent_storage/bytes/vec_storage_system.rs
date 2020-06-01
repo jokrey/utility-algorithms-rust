@@ -1,11 +1,12 @@
-use std::io::Read;
+use core::iter::FromIterator;
+use core::ptr;
 use std::cmp;
+use std::fs::File;
+use std::io::Read;
+
 use transparent_storage::StorageSystem;
 use transparent_storage::StorageSystemError;
-use std::fs::File;
 use transparent_storage::Substream;
-use core::ptr;
-use core::iter::FromIterator;
 
 //larger cache, too avoid reallocation
 pub struct VecStorageSystem {
@@ -93,7 +94,7 @@ impl StorageSystem for VecStorageSystem {
         Ok(())
     }
 
-    fn append_stream(&mut self, stream: &mut Read, stream_length: i64) -> Result<(), StorageSystemError> {
+    fn append_stream(&mut self, stream: &mut dyn Read, stream_length: i64) -> Result<(), StorageSystemError> {
         let mut buf = vec![0u8; stream_length as usize];
         match stream.read_exact(&mut buf) {
             _ => {} //if it goes right, cool. If it doesn't the rest of the buffer is filled with 0's which is also fine.

@@ -1,28 +1,28 @@
 extern crate ring;
 extern crate untrusted;
 
-use encoding::tag_based::bytes::ubae::Ubae;
-use transparent_storage::bytes::file_storage_system::FileStorageSystem;
-use network::mcnp::mcnp_connection::McnpConnection;
-use network::mcnp::mcnp_connection::McnpConnectionTraits;
-use std::str;
-use encoding::tag_based::bytes::remote::rbae_mcnp_causes;
-use encoding::tag_based::bytes::ubae::UbaeTraits;
-use encoding::tag_based::bytes::libae::LIbae;
-use encoding::tag_based::bytes::libae::LIbaeTraits;
-use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
-use transparent_storage::StorageSystemError;
-use std::io::Read;
-use transparent_storage::Substream;
 use std::fs::File;
-use encoding::tag_based::bytes::remote::rbae_server::RbaeServer;
-use encoding::tag_based::bytes::remote::authenticated::authentication_helper;
-use encoding::tag_based::bytes::remote::authenticated::arbae_mcnp_causes;
-use std::error::Error;
-use std::sync::MutexGuard;
-use std::thread;
+use std::io::Read;
+use std::str;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::sync::MutexGuard;
+use std::thread;
+
+use encoding::tag_based::bytes::libae::LIbae;
+use encoding::tag_based::bytes::libae::LIbaeTraits;
+use encoding::tag_based::bytes::remote::authenticated::arbae_mcnp_causes;
+use encoding::tag_based::bytes::remote::authenticated::authentication_helper;
+use encoding::tag_based::bytes::remote::rbae_mcnp_causes;
+use encoding::tag_based::bytes::remote::rbae_server::RbaeServer;
+use encoding::tag_based::bytes::ubae::Ubae;
+use encoding::tag_based::bytes::ubae::UbaeTraits;
+use network::mcnp::mcnp_connection::McnpConnection;
+use network::mcnp::mcnp_connection::McnpConnectionTraits;
+use transparent_storage::bytes::file_storage_system::FileStorageSystem;
+use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
+use transparent_storage::StorageSystemError;
+use transparent_storage::Substream;
 
 //todo - encrypt incoming and outgoing data  - the stream functions make this a little hard
 //todo implement authentication where the pseudo tag authentication doesn't apply(for example in unregister).
@@ -104,11 +104,11 @@ impl ArbaeServer {
         let actual_tag = authentication_helper::actual_tag_from(user_name, tag);
         self.add_entry_nocheck(&actual_tag, content)
     }
-    pub fn add_user_entry_from_stream(&mut self, user_name:&str, tag:&str, stream : &mut Read, stream_length:i64) -> Result<(), StorageSystemError> {
+    pub fn add_user_entry_from_stream(&mut self, user_name:&str, tag:&str, stream : &mut dyn Read, stream_length:i64) -> Result<(), StorageSystemError> {
         let actual_tag = authentication_helper::actual_tag_from(user_name, tag);
         self.add_entry_from_stream(&actual_tag, stream, stream_length)
     }
-    pub fn add_user_entry_from_stream_nocheck(&mut self, user_name:&str, tag:&str, stream : &mut Read, stream_length:i64) -> Result<(), StorageSystemError> {
+    pub fn add_user_entry_from_stream_nocheck(&mut self, user_name:&str, tag:&str, stream : &mut dyn Read, stream_length:i64) -> Result<(), StorageSystemError> {
         let actual_tag = authentication_helper::actual_tag_from(user_name, tag);
         self.add_entry_from_stream_nocheck(&actual_tag, stream, stream_length)
     }
@@ -124,7 +124,7 @@ impl ArbaeServer {
         let mut state = match self.handle_connection_authentication(connection) {
             Ok(name_hash_sk) => name_hash_sk,
             Err(e) => {
-                println!("Auth err: {}", e.description());
+                println!("Auth err: {}", e.to_string());
                 return;
             },
         };
