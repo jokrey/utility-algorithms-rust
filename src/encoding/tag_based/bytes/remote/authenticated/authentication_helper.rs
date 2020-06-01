@@ -1,22 +1,23 @@
+extern crate base64;
+extern crate crypto;
 extern crate ring;
 extern crate untrusted;
-extern crate crypto;
-extern crate base64;
 
-use ring::rand;
-use ring::digest;
-use ring::agreement;
-use ring::error;
-use ring::rand::SecureRandom;
+use std::str;
 
 use crypto::aes;
-use crypto::aes::{KeySize};
+use crypto::aes::KeySize;
 use crypto::symmetriccipher::SynchronousStreamCipher;
+use ring::agreement;
+use ring::digest;
+use ring::error;
+use ring::rand;
+use ring::rand::SecureRandom;
+use ring::pbkdf2;
+
 use network::mcnp::mcnp_connection::McnpConnection;
-use std::str;
 use network::mcnp::mcnp_connection::McnpConnectionTraits;
 use transparent_storage::StorageSystemError;
-
 
 //ECDH Key Agreement
 pub fn generate_private_key() -> Result<agreement::EphemeralPrivateKey, error::Unspecified> {
@@ -73,6 +74,33 @@ pub fn aes_crt_np_128_encrypt(message:&[u8], key:&[u8], nonce:&[u8]) -> Vec<u8> 
 }
 pub fn aes_crt_np_128_decrypt(message:&[u8], key:&[u8], nonce:&[u8]) -> Vec<u8> {
     aes_crt_np_128_encrypt(message, key, nonce)
+}
+
+pub fn aes_crt_np_128_encrypt_into_decipherable(message: &[u8], key_as_str: &str) -> Vec<u8> {
+    let key = derive_key(&key_as_str);
+    let mut nonce = generate_128bit_nonce();
+    let mut cipher_text = aes_crt_np_128_encrypt(message, &key, &nonce);
+    let decipherable_text = {
+        nonce.append(&mut cipher_text);//empties out cipher text
+        nonce
+    };
+    decipherable_text
+}
+
+pub fn aes_crt_np_128_decrypt_from_decipherable(decipherable_text: &[u8], key_as_str: &str) -> Vec<u8> {
+    let key = derive_key(&key_as_str);
+    let nonce = &decipherable_text[0..16];
+    aes_crt_np_128_decrypt(&decipherable_text[16..], &key, &nonce)
+}
+
+static PBKDF2_ALG: pbkdf2::Algorithm = pbkdf2::PBKDF2_HMAC_SHA256;
+const CREDENTIAL_LEN: usize = digest::SHA256_OUTPUT_LEN;
+pub type Credential = [u8; CREDENTIAL_LEN];
+pub fn derive_key(password: &str) -> Credential {
+    let mut to_store: Credential = [0u8; CREDENTIAL_LEN];
+    pbkdf2::derive(PBKDF2_ALG, std::num::NonZeroU32::new(100_000).unwrap(), &[0u8, 1, 2, 3, 4, 5],
+                   password.as_bytes(), &mut to_store);
+    to_store
 }
 
 pub fn do_key_exchange(private_key:agreement::EphemeralPrivateKey, my_public_key:&[u8], received_remote_public_key:&[u8]) -> Result<Vec<u8>, ring::error::Unspecified> {
@@ -154,6 +182,17 @@ fn split(b:&[u8], pos:usize) -> [Vec<u8>;2] {
 
 
 
+#[test]
+fn encrypt_decrypt_decipherable() {
+    let pw = "This is a test password and is in no way representative of my real pw";
+    let orig_plain_text = "This is a test";
+
+    let decipherable_text = aes_crt_np_128_encrypt_into_decipherable(orig_plain_text.as_bytes(), pw);
+
+    let deciphered_text = aes_crt_np_128_decrypt_from_decipherable(&decipherable_text, pw);
+
+    assert_eq!(orig_plain_text, str::from_utf8(&deciphered_text).unwrap())
+}
 
 #[test]
 fn test_and_demonstrate_ecdh_func() {
@@ -167,7 +206,7 @@ fn test_and_demonstrate_ecdh_func() {
 
     let received_remote_public_key = compute_public_key(&generate_private_key().unwrap()).unwrap();
 
-    agreement::agree_ephemeral(my_private_key, &agreement::ECDH_P256,untrusted::Input::from(&received_remote_public_key), ring::error::Unspecified,
+    agreement::agree_ephemeral(my_private_key,&agreement::UnparsedPublicKey::new(&agreement::ECDH_P256, &received_remote_public_key), ring::error::Unspecified,
                                |key_material| {
                                    println!("key material??:  {:?}", key_material);
                                    println!("key material.len:  {}", key_material.len());
