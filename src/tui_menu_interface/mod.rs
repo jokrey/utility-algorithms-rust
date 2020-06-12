@@ -625,7 +625,7 @@ pub fn read_line() -> Result<String, Box<dyn error::Error>> {
 
 pub fn print_and_read_line(message: &str) -> Result<String, Box<dyn error::Error>> {
     if !message.is_empty() {
-        print_f2(message, ": ")?;
+        print_f(message)?;
     }
     read_line()
 }
