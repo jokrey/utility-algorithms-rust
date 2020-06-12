@@ -108,6 +108,15 @@ impl BitIterator<'_> {
     pub fn new(bytes: &[u8]) -> BitIterator {
         BitIterator { bytes, byte_index: 0, bit_index: 0 }
     }
+    pub fn num_remaining(&self) -> usize {
+        if self.byte_index >= self.bytes.len() {
+            0
+        } else {
+            let bytes_remaining = self.bytes.len() - self.byte_index;
+            let bits_remaining = 8 - self.bit_index;
+            bytes_remaining * 8 + bits_remaining as usize
+        }
+    }
 }
 impl Iterator for BitIterator<'_> {
     type Item = bool;
