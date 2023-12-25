@@ -7,15 +7,15 @@ use std::io::Read;
 use std::io::Write;
 use std::path::Path;
 
-use encoding::tag_based::bytes::libae::LIbae;
-use encoding::tag_based::bytes::libae::LIbaeTraits;
-use encoding::tag_based::bytes::ubae::Ubae;
-use encoding::tag_based::bytes::ubae::UbaeTraits;
-use encoding::tag_based::bytes::ubae_directory_encoder;
-use time_keeper::TimeKeeper;
-use transparent_storage::bytes::file_storage_system::FileStorageSystem;
-use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
-use transparent_storage::StorageSystem;
+use crate::encoding::tag_based::bytes::libae::LIbae;
+use crate::encoding::tag_based::bytes::libae::LIbaeTraits;
+use crate::encoding::tag_based::bytes::ubae::Ubae;
+use crate::encoding::tag_based::bytes::ubae::UbaeTraits;
+use crate::encoding::tag_based::bytes::ubae_directory_encoder;
+use crate::time_keeper::TimeKeeper;
+use crate::transparent_storage::bytes::file_storage_system::FileStorageSystem;
+use crate::transparent_storage::bytes::vec_storage_system::VecStorageSystem;
+use crate::transparent_storage::StorageSystem;
 
 #[test]
 fn test_li_encoding() {

@@ -1,8 +1,8 @@
 use std::io;
 
-use encoding::tag_based::bytes::remote::rbae_mcnp_causes;
-use network::mcnp::mcnp_client::McnpClient;
-use network::mcnp::mcnp_connection::McnpConnectionTraits;
+use crate::encoding::tag_based::bytes::remote::rbae_mcnp_causes;
+use crate::network::mcnp::mcnp_client::McnpClient;
+use crate::network::mcnp::mcnp_connection::McnpConnectionTraits;
 
 pub fn new_remote_update_callback_receiver(addr:&str, port:u16,
                                            update_add:fn(tag:String), update_remove:fn(tag:String), update_set_content:fn()) -> Result<(), io::Error> {

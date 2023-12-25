@@ -5,9 +5,9 @@ use std::fs::File;
 use std::io::Cursor;
 use std::io::Read;
 
-use transparent_storage::{StorageSystem, StorageSystemError};
-use transparent_storage::bytes::vec_storage_system::VecStorageSystem;
-use transparent_storage::Substream;
+use crate::transparent_storage::{StorageSystem, StorageSystemError};
+use crate::transparent_storage::bytes::vec_storage_system::VecStorageSystem;
+use crate::transparent_storage::Substream;
 
 use self::byteorder::{BigEndian, ReadBytesExt};
 

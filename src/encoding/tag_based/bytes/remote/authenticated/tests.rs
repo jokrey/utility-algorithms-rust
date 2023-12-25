@@ -4,15 +4,15 @@ use std::thread;
 use std::time::Duration;
 use std::vec::Vec;
 
-use encoding::tag_based::bytes::remote::authenticated::arbae::Arbae;
-use encoding::tag_based::bytes::remote::authenticated::arbae_mcnp_causes;
-use encoding::tag_based::bytes::remote::authenticated::arbae_observer;
-use encoding::tag_based::bytes::remote::authenticated::arbae_server::ArbaeServer;
-use encoding::tag_based::bytes::ubae::Ubae;
-use encoding::tag_based::bytes::ubae::UbaeTraits;
+use crate::encoding::tag_based::bytes::remote::authenticated::arbae::Arbae;
+use crate::encoding::tag_based::bytes::remote::authenticated::arbae_mcnp_causes;
+use crate::encoding::tag_based::bytes::remote::authenticated::arbae_observer;
+use crate::encoding::tag_based::bytes::remote::authenticated::arbae_server::ArbaeServer;
+use crate::encoding::tag_based::bytes::ubae::Ubae;
+use crate::encoding::tag_based::bytes::ubae::UbaeTraits;
 ///author: jokrey
 
-use transparent_storage::bytes::file_storage_system::FileStorageSystem;
+use crate::transparent_storage::bytes::file_storage_system::FileStorageSystem;
 
 #[test]
 fn arbae_test() {
@@ -137,10 +137,10 @@ fn arbae_test() {
         bobby.unregister().expect("unregister for bobby failed");
 
         let mut bob = Arbae::login("127.0.0.1", PORT, "bob", "doesn't even matter").expect("arbae login failed");
-        bob.add_entry("not_update_called_tag1", &data).expect("add entry failed");;
-        bob.delete_entry("not_update_called_tag1").expect("delete_entry entry failed");;
-        bob.add_entry("not_update_called_tag2", &data).expect("add entry failed");;
-        bob.delete_entry_noreturn("not_update_called_tag1").expect("delete_entry failed");;
+        bob.add_entry("not_update_called_tag1", &data).expect("add entry failed");
+        bob.delete_entry("not_update_called_tag1").expect("delete_entry entry failed");
+        bob.add_entry("not_update_called_tag2", &data).expect("add entry failed");
+        bob.delete_entry_noreturn("not_update_called_tag1").expect("delete_entry failed");
     }
 
 

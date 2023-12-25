@@ -2,9 +2,9 @@ use std::io::Read;
 use std::thread;
 use std::time::Duration;
 
-use network::mcnp::mcnp_client::*;
-use network::mcnp::mcnp_connection::*;
-use network::mcnp::mcnp_server::*;
+use crate::network::mcnp::mcnp_client::*;
+use crate::network::mcnp::mcnp_connection::*;
+use crate::network::mcnp::mcnp_server::*;
 
 //Test is standardized:
 //

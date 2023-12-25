@@ -2,10 +2,10 @@ extern crate byteorder;
 
 use std;
 
-use encoding::tag_based::bytes::libae::LIbae;
-use encoding::tag_based::bytes::libae::LIbaeTraits;
-use encoding::type_transformer::bytes::booleans::detransform_booleans;
-use encoding::type_transformer::bytes::booleans::transform_booleans;
+use crate::encoding::tag_based::bytes::libae::LIbae;
+use crate::encoding::tag_based::bytes::libae::LIbaeTraits;
+use crate::encoding::type_transformer::bytes::booleans::detransform_booleans;
+use crate::encoding::type_transformer::bytes::booleans::transform_booleans;
 
 use self::byteorder::{BigEndian, ByteOrder};
 

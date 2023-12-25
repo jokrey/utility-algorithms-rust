@@ -4,13 +4,13 @@ use std::ops::Range;
 use rand::seq::SliceRandom;
 use std::fmt::{Display, Formatter};
 
-pub fn sample_unique<T: std::iter::Step>(range: Range<T>, num: usize) -> Vec<T> {
-    let mut sampled: Vec<T> = range.collect();
-    sampled.shuffle(&mut rand::thread_rng());
-    sampled.truncate(num);
-    // sampled.shrink_to_fit();
-    sampled
-}
+// pub fn sample_unique<T>(range: Range<T>, num: usize) -> Vec<T> {
+//     let mut sampled: Vec<T> = range.collect();
+//     sampled.shuffle(&mut rand::thread_rng());
+//     sampled.truncate(num);
+//     // sampled.shrink_to_fit();
+//     sampled
+// }
 
 
 #[derive(Debug)]

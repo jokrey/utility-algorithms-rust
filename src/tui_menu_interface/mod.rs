@@ -6,7 +6,7 @@ use std::io::Write;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::path::Path;
-use general::DisplayableTuple;
+use crate::general::DisplayableTuple;
 
 //from: https://stackoverflow.com/a/27582993/13241877
 macro_rules! map(

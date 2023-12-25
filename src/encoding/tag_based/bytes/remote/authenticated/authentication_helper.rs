@@ -11,13 +11,14 @@ use crypto::symmetriccipher::SynchronousStreamCipher;
 use ring::agreement;
 use ring::digest;
 use ring::error;
+use ring::error::Unspecified;
 use ring::rand;
 use ring::rand::SecureRandom;
 use ring::pbkdf2;
 
-use network::mcnp::mcnp_connection::McnpConnection;
-use network::mcnp::mcnp_connection::McnpConnectionTraits;
-use transparent_storage::StorageSystemError;
+use crate::network::mcnp::mcnp_connection::McnpConnection;
+use crate::network::mcnp::mcnp_connection::McnpConnectionTraits;
+use crate::transparent_storage::StorageSystemError;
 
 //ECDH Key Agreement
 pub fn generate_private_key() -> Result<agreement::EphemeralPrivateKey, error::Unspecified> {
@@ -103,12 +104,15 @@ pub fn derive_key(password: &str) -> Credential {
     to_store
 }
 
-pub fn do_key_exchange(private_key:agreement::EphemeralPrivateKey, my_public_key:&[u8], received_remote_public_key:&[u8]) -> Result<Vec<u8>, ring::error::Unspecified> {
-    agreement::agree_ephemeral(private_key, &agreement::UnparsedPublicKey::new(&agreement::ECDH_P256, received_remote_public_key), ring::error::Unspecified,
-                               |key_material| {
-                                   let generated_secure_secret = generate_secure_secret(key_material, my_public_key, &received_remote_public_key);
-                                   Ok(Vec::from(generated_secure_secret.as_ref()))
-                               })
+pub fn do_key_exchange(private_key:agreement::EphemeralPrivateKey, my_public_key:&[u8], received_remote_public_key:&[u8]) -> Result<Vec<u8>, Unspecified> {
+    agreement::agree_ephemeral(
+        private_key,
+        &agreement::UnparsedPublicKey::new(&agreement::ECDH_P256, received_remote_public_key),
+        |key_material| {
+            let generated_secure_secret = generate_secure_secret(key_material, my_public_key, &received_remote_public_key);
+            Vec::from(generated_secure_secret.as_ref())
+        }
+    )
 }
 
 pub fn sha256(message:&[u8]) -> Vec<u8> {
@@ -206,37 +210,35 @@ fn test_and_demonstrate_ecdh_func() {
 
     let received_remote_public_key = compute_public_key(&generate_private_key().unwrap()).unwrap();
 
-    agreement::agree_ephemeral(my_private_key,&agreement::UnparsedPublicKey::new(&agreement::ECDH_P256, &received_remote_public_key), ring::error::Unspecified,
-                               |key_material| {
-                                   println!("key material??:  {:?}", key_material);
-                                   println!("key material.len:  {}", key_material.len());
+    agreement::agree_ephemeral(my_private_key, &agreement::UnparsedPublicKey::new(&agreement::ECDH_P256, &received_remote_public_key),
+       |key_material| {
+           println!("key material??:  {:?}", key_material);
+           println!("key material.len:  {}", key_material.len());
 
 
-                                   let generated_secure_secret = generate_secure_secret(key_material, &my_public_key, &received_remote_public_key);
+           let generated_secure_secret = generate_secure_secret(key_material, &my_public_key, &received_remote_public_key);
 
-                                   println!("hashed_secret??:  {:?}", generated_secure_secret.as_ref());
+           println!("hashed_secret??:  {:?}", generated_secure_secret.as_ref());
 
 
-
-                                   //SUBSEQUENT AES  (need to use 128, because java(without some work) is restricted to 128 bit keys. Which is dumb, but just a fact)
+           //SUBSEQUENT AES  (need to use 128, because java(without some work) is restricted to 128 bit keys. Which is dumb, but just a fact)
 //                                   let mut key = generated_secure_secret.as_ref();
 //                                   let nonce = generate_128bit_nonce();
-                                   let key = vec![1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6];
-                                   let nonce = vec![1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6];
-                                   let secret = "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111";
+           let key = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6];
+           let nonce = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6];
+           let secret = "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111";
 
-                                   let encrypted = aes_crt_np_128_encrypt(secret.as_bytes(), &key, &nonce);
-                                   let decrypted = aes_crt_np_128_encrypt(&encrypted, &key, &nonce);
+           let encrypted = aes_crt_np_128_encrypt(secret.as_bytes(), &key, &nonce);
+           let decrypted = aes_crt_np_128_encrypt(&encrypted, &key, &nonce);
 
 
-                                   //TRANSFER THE FOLLOWING
-                                   println!("Nonce: {:?}", nonce);
-                                   println!("Ciphertext: {:?}", encrypted);
-                                   println!("secret: {:?}", secret.as_bytes());
-                                   println!("output2: {:?}", decrypted);
-
-                                   Ok(())
-                               }).expect("agreement::agree_ephemeral failed");
+           //TRANSFER THE FOLLOWING
+           println!("Nonce: {:?}", nonce);
+           println!("Ciphertext: {:?}", encrypted);
+           println!("secret: {:?}", secret.as_bytes());
+           println!("output2: {:?}", decrypted);
+       }
+    ).expect("agreement::agree_ephemeral failed");
 }
 
 

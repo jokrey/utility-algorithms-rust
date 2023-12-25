@@ -5,7 +5,7 @@ use std::io::*;
 use std::io::Write;
 use std::net::*;
 
-use transparent_storage::Substream;
+use crate::transparent_storage::Substream;
 
 use self::byteorder::{BigEndian, ByteOrder};
 

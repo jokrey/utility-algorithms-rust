@@ -4,9 +4,9 @@ use std::cmp;
 use std::fs::File;
 use std::io::Read;
 
-use transparent_storage::StorageSystem;
-use transparent_storage::StorageSystemError;
-use transparent_storage::Substream;
+use crate::transparent_storage::StorageSystem;
+use crate::transparent_storage::StorageSystemError;
+use crate::transparent_storage::Substream;
 
 //larger cache, too avoid reallocation
 pub struct VecStorageSystem {

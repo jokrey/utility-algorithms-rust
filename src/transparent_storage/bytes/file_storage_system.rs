@@ -5,9 +5,9 @@ use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write;
 
-use transparent_storage::StorageSystem;
-use transparent_storage::StorageSystemError;
-use transparent_storage::Substream;
+use crate::transparent_storage::StorageSystem;
+use crate::transparent_storage::StorageSystemError;
+use crate::transparent_storage::Substream;
 
 pub struct FileStorageSystem {
     file:File,  //has to be properly instantiated allowing read and write.

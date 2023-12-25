@@ -2,7 +2,7 @@ use core::str::FromStr;
 use std::net::*;
 use std::thread;
 
-use network::mcnp::mcnp_connection::McnpConnectionTraits;
+use crate::network::mcnp::mcnp_connection::McnpConnectionTraits;
 
 use super::mcnp_connection::McnpConnection;
 
