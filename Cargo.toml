@@ -1,16 +1,19 @@
 [package]
 name = "jokrey_utilities"
 version = "0.1.2"
-authors = ["jokrey <justin.bennett.developer@gmail.com>"]
+authors = ["jokrey"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 byteorder = "1"
-time = "0.1"
+time = "0.3.31"
 rust-crypto = "0.2.36"
-base64 = "~0.6.0"
-untrusted = "0.7.1"
-ring = "0.16.13"
-rand = "0.7.3"
+base64 = "0.21.5"
+untrusted = "0.9.0"
+ring = "0.17.7"
+rand = "0.8.5"
 
 #[dependencies.ring]
 #version = "0.12.1"
