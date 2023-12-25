@@ -11,6 +11,13 @@ use std::fmt::{Display, Formatter};
 //     // sampled.shrink_to_fit();
 //     sampled
 // }
+pub fn sample_unique(range: Range<usize>, num: usize) -> Vec<usize> {
+    let mut sampled: Vec<usize> = range.collect();
+    sampled.shuffle(&mut rand::thread_rng());
+    sampled.truncate(num);
+    // sampled.shrink_to_fit();
+    sampled
+}
 
 
 #[derive(Debug)]
