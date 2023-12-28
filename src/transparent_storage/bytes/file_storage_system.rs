@@ -12,7 +12,7 @@ use crate::transparent_storage::Substream;
 pub struct FileStorageSystem {
     file:File,  //has to be properly instantiated allowing read and write.
     file_path:String,
-    copy_buf_size:usize
+    copy_buf:Vec<u8>
 }
 
 impl FileStorageSystem {
@@ -20,14 +20,14 @@ impl FileStorageSystem {
         return FileStorageSystem {
             file:OpenOptions::new().create(true).read(true).write(true).open(path).expect("path could no be opened."),
             file_path:path.to_owned(),
-            copy_buf_size:8192
+            copy_buf:Vec::with_capacity(8192)
         }
     }
     pub fn create_leave_source_intact_with_custom_buf_size(path:&str, internal_copy_buf_size:usize) -> FileStorageSystem {
         return FileStorageSystem {
             file:OpenOptions::new().create(true).read(true).write(true).open(path).expect("path could no be opened."),
             file_path:path.to_owned(),
-            copy_buf_size:internal_copy_buf_size
+            copy_buf:Vec::with_capacity(internal_copy_buf_size)
         }
     }
 }
@@ -89,25 +89,24 @@ impl StorageSystem for FileStorageSystem {
         let tail_len = content_size - end;
 
         //todo precache that buffer? possibly don't allocate it each time.
-        let buf_size = cmp::min(tail_len as usize, self.copy_buf_size);
-        let mut buf = Vec::with_capacity(buf_size);
-        unsafe { buf.set_len(buf_size) }
+        let buf_size = cmp::min(tail_len as usize, self.copy_buf.capacity());
+        unsafe { self.copy_buf.set_len(buf_size) }
         let mut bytes_transferred_counter: u64 = 0;
         while bytes_transferred_counter < tail_len {
             let read_pos = end + bytes_transferred_counter;
             let write_pos = start + bytes_transferred_counter;
             self.file.seek(SeekFrom::Start(read_pos))?;
-            let bytes_read = self.file.read(&mut buf)?;
+            let bytes_read = self.file.read(&mut self.copy_buf)?;
             if bytes_read <= 0 {
                 break
             } else {
                 self.file.seek(SeekFrom::Start(write_pos))?;
-                let bytes_written = self.file.write(&buf[..bytes_read])?;
+                let bytes_written = self.file.write(&self.copy_buf[..bytes_read])?;
                 if bytes_written != bytes_read {
                     return Err(StorageSystemError::new("could not entirely copy buffer"))
                 }
             }
-            bytes_transferred_counter += buf.len() as u64;
+            bytes_transferred_counter += self.copy_buf.len() as u64;
         }
         self.file.set_len(start + tail_len)?;
         Ok(())
@@ -137,19 +136,18 @@ impl StorageSystem for FileStorageSystem {
 
         let mut bytes_transferred_counter = 0;
 
-        let buf_size = cmp::min(stream_length as usize, self.copy_buf_size);
-        let mut buf = Vec::with_capacity(buf_size);
-        unsafe {buf.set_len(buf_size)}
+        let buf_size = cmp::min(stream_length as usize, self.copy_buf.capacity());
+        unsafe {self.copy_buf.set_len(buf_size)}
 
         while bytes_transferred_counter < stream_length {
-            let bytes_read = stream.read(&mut buf)?;
-            let bytes_written = self.file.write(&buf[..bytes_read])?;
+            let bytes_read = stream.read(&mut self.copy_buf)?;
+            let bytes_written = self.file.write(&self.copy_buf[..bytes_read])?;
 
             if bytes_written != bytes_read {
                 return Err(StorageSystemError::new("Could not write correct amount of bytes"))
             }
 
-            bytes_transferred_counter+=buf.len() as i64;
+            bytes_transferred_counter += self.copy_buf.len() as i64;
         }
 
         Ok(())
